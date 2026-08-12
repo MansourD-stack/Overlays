@@ -1,0 +1,13 @@
+/* Tournament — noir, blanc cassé, doré. Sobre, prestige compétition. */
+:root[data-theme="tournament"] {
+  --color-background: #0a0a0a;
+  --color-background-alt: #141414;
+  --color-primary: #e8c469;
+  --color-secondary: #1e1e1e;
+  --color-accent: #f4ede1;
+  --color-text: #f6f3ee;
+  --color-muted: #8c8880;
+  --color-danger: #d64545;
+  --color-surface-glass: rgba(20, 20, 20, 0.68);
+  --glow-color: var(--color-primary);
+}

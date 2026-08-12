@@ -1,0 +1,14 @@
+/* Dakar Neon — bleu nuit, vert électrique, jaune doré. Thème par défaut. */
+:root,
+:root[data-theme="dakar-neon"] {
+  --color-background: #060b16;
+  --color-background-alt: #0b1526;
+  --color-primary: #12e19a;
+  --color-secondary: #0a3d62;
+  --color-accent: #f5c443;
+  --color-text: #eef6f3;
+  --color-muted: #7d94a6;
+  --color-danger: #ff4d5e;
+  --color-surface-glass: rgba(11, 21, 38, 0.62);
+  --glow-color: var(--color-primary);
+}

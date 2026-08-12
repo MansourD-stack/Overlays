@@ -1,0 +1,85 @@
+.tg-widget {
+  font-family: var(--font-body);
+  font-size: 20px;
+  color: var(--color-text);
+}
+
+.tg-pop {
+  animation: tg-widget-pop var(--dur-med) var(--ease-snap);
+}
+@keyframes tg-widget-pop {
+  0% { transform: scale(0.9); opacity: 0.4; }
+  60% { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* Last-event chips */
+.tg-last-event { gap: var(--space-2); }
+.tg-last-event__dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--color-primary);
+  box-shadow: var(--glow-sm) var(--color-primary);
+  flex-shrink: 0;
+}
+.tg-last-event__label { color: var(--color-muted); font-size: 15px; }
+.tg-last-event__name { color: var(--color-text); font-weight: 600; }
+
+/* Important message */
+.tg-important-message { display: flex; align-items: center; gap: var(--space-3); max-width: 640px; }
+.tg-important-message__badge {
+  font-family: var(--font-display); color: var(--color-background);
+  background: var(--color-accent); padding: 2px 10px; border-radius: 4px;
+  font-size: 13px; letter-spacing: 0.08em; flex-shrink: 0;
+}
+.tg-important-message__text { font-size: 22px; }
+
+/* Goal bar */
+.tg-goal-bar { min-width: 260px; }
+
+/* Viewers */
+.tg-viewers__label { color: var(--color-muted); font-size: 14px; margin-right: 6px; }
+.tg-viewers__value { font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+
+/* Score */
+.tg-score { display: flex; align-items: center; gap: var(--space-4); }
+.tg-score__side { display: flex; flex-direction: column; align-items: center; }
+.tg-score__label { font-size: 12px; color: var(--color-muted); letter-spacing: 0.08em; }
+.tg-score__value { font-family: var(--font-display); font-size: 34px; font-weight: 700; }
+.tg-score__sep { color: var(--color-muted); font-size: 22px; }
+
+/* Rounds */
+.tg-rounds { display: flex; align-items: center; gap: var(--space-3); }
+.tg-rounds__label { font-size: 13px; color: var(--color-muted); letter-spacing: 0.06em; }
+.tg-rounds__pips { display: flex; gap: 6px; }
+.tg-rounds__pip { width: 14px; height: 14px; border-radius: 3px; background: var(--color-secondary); border: 1px solid var(--color-muted); }
+.tg-rounds__pip--won { background: var(--color-primary); border-color: var(--color-primary); box-shadow: var(--glow-sm) var(--color-primary); }
+
+/* Ranking */
+.tg-ranking__label { color: var(--color-muted); font-size: 14px; margin-right: 6px; }
+.tg-ranking__value { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--color-accent); }
+
+/* Game info */
+.tg-game-info__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger); box-shadow: var(--glow-sm) var(--color-danger); }
+.tg-game-info__game { font-weight: 600; }
+
+/* Timer */
+.tg-timer__label { color: var(--color-muted); font-size: 14px; margin-right: 6px; }
+.tg-timer__value { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700; }
+
+/* Flaa's Radar */
+.tg-radar { width: 240px; display: flex; flex-direction: column; gap: 6px; }
+.tg-radar__title { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.08em; color: var(--color-primary); }
+.tg-radar__row { display: flex; justify-content: space-between; font-size: 15px; }
+.tg-radar__key { color: var(--color-muted); }
+.tg-radar__row--event .tg-radar__event { color: var(--color-accent); max-width: 140px; text-align: right; }
+
+/* Boss fight */
+.tg-boss { width: 320px; }
+.tg-boss__head { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.tg-boss__name { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.05em; }
+.tg-boss__phase { color: var(--color-muted); font-size: 13px; }
+.tg-boss[data-danger="true"] { animation: tg-boss-danger 0.9s ease-in-out infinite; }
+@keyframes tg-boss-danger {
+  0%, 100% { box-shadow: var(--glow-sm) var(--color-danger); }
+  50% { box-shadow: var(--glow-md) var(--color-danger); }
+}

@@ -1,0 +1,32 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mascotte Flaa's Squad — lunettes (gros cadeau)">
+  <g stroke="currentColor" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.9">
+    <path d="M120 46 L120 14"/>
+    <path d="M86 54 L62 26"/>
+    <path d="M154 54 L178 26"/>
+    <path d="M62 90 L24 84"/>
+    <path d="M178 90 L216 84"/>
+  </g>
+  <g fill="var(--color-accent, currentColor)">
+    <circle cx="120" cy="14" r="6"/>
+    <circle cx="62" cy="26" r="5"/>
+    <circle cx="178" cy="26" r="5"/>
+    <circle cx="24" cy="84" r="5"/>
+    <circle cx="216" cy="84" r="5"/>
+  </g>
+
+  <polygon points="120,50 172,78 180,140 150,190 90,190 60,140 68,78"
+    fill="var(--color-secondary, #0a3d62)" stroke="currentColor" stroke-width="4"/>
+
+  <!-- cool sunglasses bar -->
+  <g>
+    <rect x="86" y="106" width="30" height="20" rx="6" fill="#0a0a0a" stroke="var(--color-primary, currentColor)" stroke-width="3"/>
+    <rect x="124" y="106" width="30" height="20" rx="6" fill="#0a0a0a" stroke="var(--color-primary, currentColor)" stroke-width="3"/>
+    <line x1="116" y1="114" x2="124" y2="114" stroke="var(--color-primary, currentColor)" stroke-width="3"/>
+    <line x1="86" y1="112" x2="70" y2="106" stroke="var(--color-primary, currentColor)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="154" y1="112" x2="170" y2="106" stroke="var(--color-primary, currentColor)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="95" y1="112" x2="101" y2="118" stroke="var(--color-accent, #f5c443)" stroke-width="3" opacity="0.8"/>
+  </g>
+
+  <!-- smug grin -->
+  <path d="M104 156 Q120 162 138 152" stroke="currentColor" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

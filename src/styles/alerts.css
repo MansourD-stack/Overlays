@@ -1,0 +1,119 @@
+.tg-alert-layer {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-alert);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 64px;
+  pointer-events: none;
+}
+
+.tg-stage[data-layout="vertical"] .tg-alert-layer {
+  align-items: center;
+  padding-top: 0;
+}
+
+.tg-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-5);
+  background: var(--color-surface-glass);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-cut);
+  box-shadow: var(--glow-md) var(--color-primary);
+  opacity: 0;
+  transform: translateY(-24px) scale(0.96);
+  transition: opacity var(--dur-med) var(--ease-snap), transform var(--dur-med) var(--ease-snap);
+  position: relative;
+  overflow: hidden;
+}
+.tg-alert--in { opacity: 1; transform: translateY(0) scale(1); }
+.tg-alert--out { opacity: 0; transform: translateY(-16px) scale(0.98); }
+
+.tg-alert--fullscreen {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 70%;
+  height: 46%;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  border-radius: var(--radius-cut);
+}
+
+.tg-alert__glow {
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 45%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+  animation: tg-alert-glow 2.4s ease-in-out infinite;
+}
+@keyframes tg-alert-glow {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
+
+.tg-alert__emblem { width: 64px; height: 64px; flex-shrink: 0; }
+.tg-alert__mascot { width: 96px; height: 96px; flex-shrink: 0; }
+.tg-alert__mascot--large { width: 160px; height: 160px; }
+
+.tg-alert__body { display: flex; flex-direction: column; gap: 4px; z-index: 1; }
+.tg-alert__title {
+  font-family: var(--font-display); font-weight: 700; letter-spacing: 0.06em;
+  color: var(--color-primary); font-size: 20px;
+}
+.tg-alert__title--xl { font-size: 42px; color: var(--color-accent); }
+.tg-alert__name { font-size: 26px; font-weight: 700; }
+.tg-alert__sub { color: var(--color-muted); font-size: 16px; }
+
+/* Gift tiers escalate visually */
+.tg-alert--gift-1 { border-color: var(--color-secondary); }
+.tg-alert--gift-2 { border-color: var(--color-accent); box-shadow: var(--glow-md) var(--color-accent); }
+.tg-alert--gift-3 { border-color: var(--color-primary); box-shadow: var(--glow-lg) var(--color-primary); }
+
+/* Raid / host portal */
+.tg-alert--raid { flex-direction: column; }
+.tg-alert__portal {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  border: 4px solid var(--color-primary);
+  box-shadow: var(--glow-lg) var(--color-primary);
+  animation: tg-portal-spin 3s linear infinite, tg-portal-pulse 1.4s ease-in-out infinite;
+}
+@keyframes tg-portal-spin { to { transform: rotate(360deg); } }
+@keyframes tg-portal-pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.4); } }
+
+/* Like wave */
+.tg-alert--like-wave { background: transparent; border: none; box-shadow: none; bottom: 40px; top: auto; }
+.tg-alert__wave {
+  position: absolute; inset: 0; margin: auto; width: 100%; height: 120px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--color-primary) 30%, transparent));
+  animation: tg-wave-rise 3s ease-out forwards;
+}
+@keyframes tg-wave-rise { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* Victory / defeat / energy full accents */
+.tg-alert--victory { border-color: var(--color-accent); }
+.tg-alert--defeat { border-color: var(--color-danger); box-shadow: var(--glow-md) var(--color-danger); }
+.tg-alert--energy-full { border-color: var(--color-accent); box-shadow: var(--glow-lg) var(--color-accent); }
+
+.tg-stage--boost-mode {
+  animation: tg-boost-mode 6s ease-in-out;
+}
+@keyframes tg-boost-mode {
+  0%, 100% { filter: saturate(1) brightness(1); }
+  30%, 70% { filter: saturate(1.5) brightness(1.15); }
+}
+
+[data-motion="reduced"] .tg-alert__glow,
+[data-motion="reduced"] .tg-alert__portal,
+[data-motion="reduced"] .tg-stage--boost-mode {
+  animation: none !important;
+}

@@ -1,0 +1,18 @@
+<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mascotte Flaa's Squad — en feu (victoire)">
+  <!-- flame aura -->
+  <g fill="var(--color-accent, #f5c443)" opacity="0.9">
+    <path d="M120 40 C104 20 108 4 122 -6 C114 14 128 22 126 36 C136 26 132 8 144 0 C138 22 150 30 142 46 C150 40 154 26 160 24 C158 40 146 46 148 60 C160 54 162 40 170 36 C166 54 148 58 146 74 L96 74 C92 58 78 56 72 40 C82 46 86 60 96 62 C92 46 78 40 78 24 C88 30 94 44 100 44 C94 30 100 12 96 -4 C110 6 112 22 106 36 C112 24 116 12 120 40 Z" />
+  </g>
+
+  <polygon points="120,50 172,78 180,140 150,190 90,190 60,140 68,78"
+    fill="var(--color-secondary, #0a3d62)" stroke="var(--color-accent, #f5c443)" stroke-width="4"/>
+
+  <!-- blazing eyes -->
+  <g fill="var(--color-accent, #f5c443)">
+    <path d="M92 110 Q101 122 110 110 Q101 130 92 110 Z"/>
+    <path d="M130 110 Q139 122 148 110 Q139 130 130 110 Z"/>
+  </g>
+
+  <!-- triumphant grin -->
+  <path d="M98 150 Q120 176 142 150" stroke="var(--color-primary, currentColor)" stroke-width="6" fill="none" stroke-linecap="round"/>
+</svg>

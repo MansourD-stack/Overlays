@@ -1,0 +1,35 @@
+/* Tokens partagés par tous les thèmes — la géométrie et le rythme
+   Baobab Circuit ne changent jamais, seules les couleurs sont themables. */
+:root {
+  --font-display: "Rajdhani", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+
+  --radius-cut: 14px; /* angles légèrement découpés (clip-path) */
+  --radius-cut-sm: 8px;
+  --border-glow-width: 1.5px;
+
+  --glow-sm: 0 0 8px;
+  --glow-md: 0 0 18px;
+  --glow-lg: 0 0 36px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 20px;
+  --space-5: 32px;
+  --space-6: 48px;
+
+  --safe-zone-h: 48px; /* marge de sécurité horizontale (16:9) */
+  --safe-zone-v-top: 96px; /* zone de sécurité TikTok (9:16), UI plateforme */
+  --safe-zone-v-bottom: 220px;
+
+  --z-scene: 1;
+  --z-widget: 10;
+  --z-alert: 100;
+  --z-mascot: 50;
+
+  --ease-snap: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur-med: 320ms;
+  --dur-slow: 640ms;
+}

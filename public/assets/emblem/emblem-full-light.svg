@@ -1,0 +1,26 @@
+<svg viewBox="0 0 560 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Logo Flaa's Squad complet, pour fonds clairs">
+  <g transform="translate(0,0)">
+    <polygon points="100,6 182,52 182,148 100,194 18,148 18,52"
+      fill="none" stroke="var(--color-secondary, #0a3d62)" stroke-width="4"/>
+    <rect x="95" y="96" width="10" height="62" rx="2" fill="var(--color-secondary, #0a3d62)"/>
+    <g stroke="var(--color-secondary, #0a3d62)" stroke-width="5" fill="none" stroke-linecap="round">
+      <path d="M100 100 L100 70 L72 50"/>
+      <path d="M100 96 L100 66 L128 44"/>
+      <path d="M100 92 L74 78 L50 78"/>
+      <path d="M100 92 L126 78 L150 78"/>
+      <path d="M100 80 L100 54"/>
+    </g>
+    <g fill="var(--color-accent, #b8860b)">
+      <circle cx="72" cy="50" r="7"/>
+      <circle cx="128" cy="44" r="7"/>
+      <circle cx="50" cy="78" r="6"/>
+      <circle cx="150" cy="78" r="6"/>
+      <circle cx="100" cy="50" r="7"/>
+    </g>
+  </g>
+  <text x="216" y="98" font-family="Rajdhani, Segoe UI, sans-serif" font-size="46" font-weight="700"
+    letter-spacing="4" fill="#141414">FLAA'S</text>
+  <text x="216" y="140" font-family="Rajdhani, Segoe UI, sans-serif" font-size="28" font-weight="600"
+    letter-spacing="10" fill="var(--color-secondary, #0a3d62)">SQUAD</text>
+  <line x1="218" y1="112" x2="540" y2="112" stroke="var(--color-secondary, #0a3d62)" stroke-width="2" opacity="0.6"/>
+</svg>

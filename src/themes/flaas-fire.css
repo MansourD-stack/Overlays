@@ -1,0 +1,13 @@
+/* Flaa's Fire — noir, orange, corail. */
+:root[data-theme="flaas-fire"] {
+  --color-background: #0c0705;
+  --color-background-alt: #180d09;
+  --color-primary: #ff7a29;
+  --color-secondary: #2b120a;
+  --color-accent: #ff5c6c;
+  --color-text: #fbeee6;
+  --color-muted: #a3897d;
+  --color-danger: #ff3b30;
+  --color-surface-glass: rgba(24, 13, 9, 0.62);
+  --glow-color: var(--color-primary);
+}

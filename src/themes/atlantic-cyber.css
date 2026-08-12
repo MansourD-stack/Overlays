@@ -1,0 +1,13 @@
+/* Atlantic Cyber — bleu profond, cyan, violet. */
+:root[data-theme="atlantic-cyber"] {
+  --color-background: #050914;
+  --color-background-alt: #0a1224;
+  --color-primary: #35e8ff;
+  --color-secondary: #131a3d;
+  --color-accent: #a06bff;
+  --color-text: #e9f2ff;
+  --color-muted: #7c88b8;
+  --color-danger: #ff4d7e;
+  --color-surface-glass: rgba(10, 18, 36, 0.62);
+  --glow-color: var(--color-primary);
+}

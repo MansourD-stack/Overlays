@@ -1,0 +1,13 @@
+/* Night Mode — anthracite, rouge. Sessions tardives, faible fatigue oculaire. */
+:root[data-theme="night-mode"] {
+  --color-background: #0a0a0c;
+  --color-background-alt: #131315;
+  --color-primary: #d43f3f;
+  --color-secondary: #1c1c20;
+  --color-accent: #ff6b6b;
+  --color-text: #e8e6e3;
+  --color-muted: #706e6c;
+  --color-danger: #ff2d2d;
+  --color-surface-glass: rgba(19, 19, 21, 0.68);
+  --glow-color: var(--color-primary);
+}
