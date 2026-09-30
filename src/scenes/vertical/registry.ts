@@ -1,6 +1,6 @@
 import type { SceneEntry } from "@/scenes/types";
 
-const COMMON_WIDGETS = ["lastFollower", "lastGift", "raidHost", "importantMessage", "gameInfo", "viewers", "energyTeranga"];
+const COMMON_WIDGETS = ["lastFollower", "lastDonation", "lastGift", "raidHost", "importantMessage", "gameInfo", "viewers", "energyTeranga", "goalDonations"];
 
 export const VERTICAL_SCENES: SceneEntry[] = [
   {
@@ -31,7 +31,7 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     webcamSlot: "full",
     ctaZone: true,
     clean: false,
-    widgets: ["lastFollower", "importantMessage", "goalFollowers"],
+    widgets: ["lastFollower", "importantMessage", "goalFollowers", "goalDonations"],
   },
   {
     id: "tiktok-justchatting",
@@ -78,7 +78,7 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     ctaZone: false,
     clean: false,
     widgets: [],
-    heroTitle: "MERCI FLAA'S SQUAD",
+    heroTitle: "MERCI {community}",
     heroSubtitle: "À très vite",
     mascotState: "happy",
     showSocials: true,

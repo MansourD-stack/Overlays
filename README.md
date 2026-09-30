@@ -1,62 +1,82 @@
-# Flaa's Squad Overlays — Afro-Future
+# Jokko — identité de live et soutiens mobile money
 
-Système d'overlays premium pour un streamer gaming sénégalais, pensé pour **Twitch, TikTok LIVE, YouTube et Kick**. Direction visuelle : **Baobab Circuit** — le baobab réinterprété en circuit imprimé futuriste, énergie de Dakar, esthétique e-sport. Voir [`docs/ARCHITECTURE_AND_VISUAL_DIRECTIONS.md`](docs/ARCHITECTURE_AND_VISUAL_DIRECTIONS.md) pour l'architecture complète et les 3 directions visuelles envisagées.
+**Jokko** donne aux streamers et créateurs live sénégalais (Twitch, TikTok LIVE) une identité de diffusion professionnelle **et** un moyen natif d'être soutenus par leur audience via **Wave, Orange Money et Free Money**. Chaque soutien confirmé s'affiche en direct sur l'overlay.
+
+Le dépôt contient :
+
+- **La plateforme Jokko (MVP v1)** : page de soutien fan, tableau de bord streamer (historique, solde, retraits Wave), paiements via PayDunya avec webhook, mode test complet sans compte externe, Rang Teranga inter-streamers.
+- **Le système d'overlays Afro-Future** (direction *Baobab Circuit*) : 23 scènes horizontales et verticales, 5 thèmes, 19 widgets, alertes en file d'attente, mascotte, panneau `/control`. Il reste utilisable seul, en local, par le streamer fondateur.
 
 ## Démarrage rapide (moins de 15 minutes)
+
+Prérequis : [Node.js 20.12 ou plus récent](https://nodejs.org).
 
 ```bash
 npm install
 npm run dev
 ```
 
-Ouvrez :
-- **http://localhost:5173/control** — le panneau de contrôle (jamais visible dans vos scènes de stream)
-- **http://localhost:5173/?scene=twitch-gameplay-webcam&layout=horizontal** — une scène horizontale (Twitch/YouTube/Kick)
-- **http://localhost:5173/?scene=tiktok-gameplay-webcam&layout=vertical** — une scène verticale (TikTok LIVE)
+Puis ouvre **http://localhost:5173/dashboard** :
 
-Ajoutez ces URLs comme **Browser Source** dans OBS ou TikTok LIVE Studio — voir [`docs/OBS_SETUP.md`](docs/OBS_SETUP.md) et [`docs/TIKTOK_LIVE_STUDIO_SETUP.md`](docs/TIKTOK_LIVE_STUDIO_SETUP.md).
+1. Crée ton compte (nom de streamer, identifiant, e-mail, mot de passe).
+2. Copie l'URL d'overlay proposée et ajoute-la comme **Browser Source** dans OBS (1920×1080) ou TikTok LIVE Studio (1080×1920).
+3. Clique sur **Envoyer une alerte de test** : elle apparaît sur ton overlay.
+4. Partage ton lien de soutien `http://localhost:5173/s/<ton-identifiant>` et fais un don de test depuis ton téléphone ou un autre onglet.
 
-Une seule commande fait tout tourner : Vite sert les deux pages (overlay + panneau de contrôle) et un petit relais WebSocket local (greffé sur le même serveur) synchronise le panneau de contrôle avec toutes les scènes ouvertes — pas de second process, pas de backend séparé.
+Sans configuration, tout tourne en **mode test** (paiements simulés, aucun argent réel). Pour brancher PayDunya : [docs/JOKKO_PAIEMENTS.md](docs/JOKKO_PAIEMENTS.md).
 
-## Fonctionnalités
+> Pour tester depuis un téléphone sur le même Wi-Fi : `VITE_HOST=0.0.0.0 npm run dev`, puis ouvre `http://<ip-de-ton-pc>:5173/s/<identifiant>`.
 
-- **23 scènes** : 11 horizontales (1920×1080) + 12 verticales (1080×1920), chacune pensée séparément (pas une simple réduction de l'autre).
-- **5 thèmes** interchangeables sans toucher au code : Dakar Neon, Flaa's Fire, Atlantic Cyber, Tournament, Night Mode.
-- **18 widgets** indépendants : activables, déplaçables (position en "dock"), redimensionnables et recolorables depuis `/control`.
-- **Alertes en file d'attente** : follow, abonnement, cadeaux (3 paliers), raid/host, vague de likes, Mode Flaa's Activé — jamais deux alertes superposées.
-- **Jauge d'énergie** : monte avec les follows/cadeaux/likes/victoires, avec activation spectaculaire à 100 %.
-- **Mode Boss Fight** : barre de vie, phases, état de danger.
-- **Mascotte SVG à 7 états** (idle, happy, shocked, angry, sleep, fire, glasses) et **emblème** exportable en plusieurs variantes.
-- **Panneau de contrôle local** (`/control`) : changement de scène/thème en direct, édition des objectifs/textes, simulateur d'alertes, gestion des widgets, réglages de performance.
-- **Mode simulation complet** : aucune dépendance à une API TikTok non documentée — tous les événements peuvent être testés localement.
-- **3 profils de performance** (low / balanced / ultra) + `reducedMotion`.
+## Les pages
 
-## Structure du projet
+| URL | Pour qui | Rôle |
+|---|---|---|
+| `/dashboard` | streamer | inscription, démarrage en 3 étapes, historique, solde, retraits, réglages, URLs d'overlay |
+| `/s/<identifiant>` | fans | page de soutien mobile aux couleurs du streamer, confirmation et Rang Teranga |
+| `/?scene=…&layout=…&key=…` | OBS / TikTok LIVE Studio | overlay (Browser Source) |
+| `/control` | streamer | panneau de contrôle (scènes, thèmes, widgets, simulateur d'alertes) — n'apparaît jamais dans les scènes |
+| `/pay/sim/<ref>` | tests | simulateur de paiement (mode test uniquement) |
+
+URLs courtes demandées par le cahier des charges : `/?scene=twitch-gameplay`, `/?scene=tiktok-gameplay`, `/?scene=starting-soon`, `/?scene=brb`, `/?layout=vertical` (le même alias choisit la scène horizontale ou verticale selon `layout`).
+
+## Commandes
+
+| Commande | Usage |
+|---|---|
+| `npm run dev` | tout-en-un local : pages, API, webhooks, relais temps réel (port 5173) |
+| `npm test` | tests du serveur (paiements, webhooks, sécurité, rangs, validation) |
+| `npm run typecheck` | vérification TypeScript |
+| `npm run build` | build du front (`dist/`) et du serveur (`dist-server/`) |
+| `npm start` | serveur de production (port `PORT`, 8080 par défaut) |
+
+## Structure
 
 ```
-config/streamer.json      Personnalisation (pseudo, objectifs, thème, webcam…) — le fichier à éditer en premier
-src/themes/                5 thèmes = 5 fichiers CSS de variables
-src/core/                  config, router, bus d'événements (WS + simulation), file d'alertes, profils de perf
-src/components/            briques visuelles partagées (cadre lumineux, jauge, mascotte, emblème, particules)
-src/scenes/horizontal/     11 scènes Twitch/YouTube/Kick
-src/scenes/vertical/       12 scènes TikTok LIVE
-src/widgets/                18 widgets
-src/alerts/                 gestionnaire d'alertes + file d'attente
-src/control/                panneau /control
-public/assets/               emblème, mascotte (SVG)
-public/sounds/                emplacement pour sons optionnels (aucun fichier sous licence fourni)
+server/                    Serveur Jokko (Node, sans framework)
+  app.ts                   routes API, pages, offres, admin
+  payments/                agrégateurs (PayDunya, simulé) + cycle de vie des paiements
+  realtime.ts              relais WebSocket, un canal par streamer
+  store.ts                 stockage persistant (data/jokko.json)
+  auth.ts, validation.ts, ranks.ts
+  test/                    tests Vitest
+src/jokko/                 tableau de bord, page de soutien, simulateur (TypeScript + CSS)
+src/                       overlays : scenes/, widgets/, alerts/, themes/, config/, control/
+config/streamer.json       personnalisation du mode local (pseudo, objectifs, thème, webcam…)
+public/assets/             emblème, mascotte (SVG), logo Jokko
+.env.example               variables d'environnement (à copier en .env, jamais versionné)
 ```
 
 ## Documentation
 
-- [Architecture & directions visuelles](docs/ARCHITECTURE_AND_VISUAL_DIRECTIONS.md)
-- [Installation OBS](docs/OBS_SETUP.md)
-- [Installation TikTok LIVE Studio](docs/TIKTOK_LIVE_STUDIO_SETUP.md)
-- [Guide de personnalisation](docs/CUSTOMIZATION.md)
-- [Ajouter une scène ou une alerte](docs/ADDING_SCENES_AND_ALERTS.md)
-- [Dépannage](docs/TROUBLESHOOTING.md)
-- [Checklist de validation](docs/VALIDATION_CHECKLIST.md)
+- [Architecture Jokko](docs/JOKKO_ARCHITECTURE.md) : composants, parcours d'un paiement, données, sécurité, correspondance avec le cahier des charges
+- [Paiements, PayDunya et mise en production](docs/JOKKO_PAIEMENTS.md)
+- [Installation OBS](docs/OBS_SETUP.md) · [TikTok LIVE Studio](docs/TIKTOK_LIVE_STUDIO_SETUP.md)
+- [Personnalisation](docs/CUSTOMIZATION.md) · [Ajouter une scène ou une alerte](docs/ADDING_SCENES_AND_ALERTS.md)
+- [Architecture et directions visuelles des overlays](docs/ARCHITECTURE_AND_VISUAL_DIRECTIONS.md)
+- [Dépannage](docs/TROUBLESHOOTING.md) · [Checklist de validation](docs/VALIDATION_CHECKLIST.md)
 
 ## Sécurité
 
-Aucun secret, token ou clé d'API n'est stocké dans ce dépôt. Le serveur de développement (`npm run dev`) est prévu pour un usage strictement local — ne l'exposez pas sur un réseau non fiable (voir la note dans `docs/TROUBLESHOOTING.md`).
+Aucun secret, jeton ou clé d'API n'est stocké dans ce dépôt. Les clés PayDunya, le secret serveur et le jeton d'administration viennent de variables d'environnement (`.env` est ignoré par git) ; les données (`data/`) sont ignorées aussi. Détails : [docs/JOKKO_ARCHITECTURE.md#sécurité](docs/JOKKO_ARCHITECTURE.md#sécurité).
+
+> **Avant le premier vrai paiement** : faire valider le statut juridique et les obligations fiscales avec l'agrégateur et un conseil local (voir [docs/JOKKO_PAIEMENTS.md](docs/JOKKO_PAIEMENTS.md)).

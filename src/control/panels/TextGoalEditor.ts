@@ -10,6 +10,7 @@ export function textGoalEditorPanel(): HTMLElement {
     class: "tg-ctrl-grid",
     children: [
       textField("Pseudo", c.pseudo, (v) => pushConfig({ pseudo: v })),
+      textField("Communauté", c.communityName, (v) => pushConfig({ communityName: v })),
       textField("Tagline", c.tagline, (v) => pushConfig({ tagline: v })),
       textField("Jeu actuel", c.game, (v) => pushConfig({ game: v })),
       textField("Twitch", c.socials.twitch, (v) => pushConfig({ socials: { twitch: v } })),
@@ -27,6 +28,8 @@ export function textGoalEditorPanel(): HTMLElement {
       numberField("Likes objectif", c.goals.likes.target, (v) => pushConfig({ goals: { likes: { target: v } } })),
       numberField("Cadeaux actuels", c.goals.gifts.current, (v) => pushConfig({ goals: { gifts: { current: v } } })),
       numberField("Cadeaux objectif", c.goals.gifts.target, (v) => pushConfig({ goals: { gifts: { target: v } } })),
+      numberField("Dons actuels (F)", c.goals.donations.current, (v) => pushConfig({ goals: { donations: { current: v } } })),
+      numberField("Dons objectif (F)", c.goals.donations.target, (v) => pushConfig({ goals: { donations: { target: v } } })),
     ],
   });
 

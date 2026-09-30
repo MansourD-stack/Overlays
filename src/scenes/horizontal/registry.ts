@@ -1,6 +1,6 @@
 import type { SceneEntry } from "@/scenes/types";
 
-const COMMON_WIDGETS = ["lastFollower", "lastSub", "lastGift", "raidHost", "importantMessage", "gameInfo", "viewers", "energyTeranga"];
+const COMMON_WIDGETS = ["lastFollower", "lastSub", "lastDonation", "lastGift", "raidHost", "importantMessage", "gameInfo", "viewers", "energyTeranga", "goalDonations"];
 
 export const HORIZONTAL_SCENES: SceneEntry[] = [
   {
@@ -11,7 +11,7 @@ export const HORIZONTAL_SCENES: SceneEntry[] = [
     webcamSlot: "none",
     ctaZone: false,
     clean: false,
-    widgets: ["timer", "goalFollowers", "gameInfo"],
+    widgets: ["timer", "goalFollowers", "goalDonations", "gameInfo"],
     heroTitle: "EN DIRECT DANS QUELQUES INSTANTS",
     heroSubtitle: "Dama Ready — Nio Far",
     mascotState: "idle",
@@ -68,7 +68,7 @@ export const HORIZONTAL_SCENES: SceneEntry[] = [
     ctaZone: false,
     clean: false,
     widgets: ["gameInfo"],
-    heroTitle: "MERCI FLAA'S SQUAD",
+    heroTitle: "MERCI {community}",
     heroSubtitle: "On se retrouve au prochain live",
     mascotState: "happy",
     showSocials: true,

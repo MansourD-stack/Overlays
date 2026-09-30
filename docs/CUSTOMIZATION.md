@@ -7,6 +7,7 @@ C'est le fichier à éditer en premier, sans toucher au code :
 ```json
 {
   "pseudo": "Flaa's Squad",
+  "communityName": "Flaa's Squad",
   "tagline": "Dama Ready",
   "game": "Free Fire",
   "socials": { "twitch": "...", "tiktok": "...", "youtube": "", "kick": "" },
@@ -15,6 +16,10 @@ C'est le fichier à éditer en premier, sans toucher au code :
   ...
 }
 ```
+
+`communityName` est repris dans les alertes (« Bienvenue dans la … »), le score et l'écran de fin (`{community}` dans les titres de scène). `goals.donations` alimente le widget **Objectif dons**.
+
+> **Avec un compte Jokko** (overlay ouvert avec `&key=…`), le nom, la communauté, le thème et l'objectif de dons viennent des **réglages du tableau de bord** et priment sur ce fichier. Le reste (widgets, webcam, performance…) continue de se régler ici et dans `/control`.
 
 Après modification, relancez `npm run dev` (ou rechargez la page) — c'est la source des valeurs par défaut. Toute modification faite en direct depuis `/control` est ensuite stockée dans le `localStorage` du navigateur (donc persistante entre deux sessions sur la même machine) et n'écrase jamais ce fichier.
 
@@ -33,7 +38,7 @@ localStorage.removeItem("overlay:config-overrides")
 ### Ajouter un 6ᵉ thème
 
 1. Créez `src/themes/mon-theme.css` sur le modèle des fichiers existants (mêmes 9 variables : `--color-background`, `--color-background-alt`, `--color-primary`, `--color-secondary`, `--color-accent`, `--color-text`, `--color-muted`, `--color-danger`, `--color-surface-glass`).
-2. Importez-le et ajoutez son nom dans `THEMES`/`THEME_LABELS` dans `src/themes/index.ts`.
+2. Importez-le et ajoutez son nom dans `THEMES`/`THEME_LABELS` dans `src/themes/index.ts`, ainsi que dans `THEMES` de `server/app.ts` (et `THEME_LABELS` de `src/jokko/dashboard/main.ts`) pour le proposer aux streamers Jokko.
 3. Il apparaît automatiquement dans le sélecteur de thème de `/control`.
 
 ## 3. Widgets : activer, déplacer, redimensionner, recolorer

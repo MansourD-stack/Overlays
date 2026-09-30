@@ -17,7 +17,7 @@ export type ThemeName = (typeof THEMES)[number];
 
 export const THEME_LABELS: Record<ThemeName, string> = {
   "dakar-neon": "Dakar Neon",
-  "flaas-fire": "Flaa's Fire",
+  "flaas-fire": "Teranga Fire",
   "atlantic-cyber": "Atlantic Cyber",
   tournament: "Tournament",
   "night-mode": "Night Mode",

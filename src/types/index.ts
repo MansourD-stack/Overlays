@@ -16,13 +16,16 @@ export interface Goal {
 
 export interface StreamerConfig {
   pseudo: string;
+  /** Community name used in alerts ("Bienvenue dans la …"). Per streamer in Jokko hosted mode. */
+  communityName: string;
   tagline: string;
   game: string;
   socials: { twitch: string; tiktok: string; youtube: string; kick: string };
   theme: ThemeName;
   performanceProfile: PerformanceProfile;
   reducedMotion: boolean;
-  goals: { followers: Goal; likes: Goal; gifts: Goal };
+  /** donations = cumulative Jokko mobile-money donations, in F CFA. */
+  goals: { followers: Goal; likes: Goal; gifts: Goal; donations: Goal };
   webcam: { mode: WebcamMode; floatShape: WebcamShape; visible: boolean };
   energyTeranga: { current: number; max: number };
   bossFight: {
@@ -49,6 +52,7 @@ export type TerangaEventType =
   | "follow"
   | "sub"
   | "gift"
+  | "donation"
   | "like_goal"
   | "raid"
   | "host"

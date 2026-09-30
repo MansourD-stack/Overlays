@@ -19,7 +19,7 @@
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-3) var(--space-5);
-  background: var(--color-surface-glass);
+  background: color-mix(in srgb, var(--color-background) 92%, transparent);
   border: 2px solid var(--color-primary);
   border-radius: var(--radius-cut);
   box-shadow: var(--glow-md) var(--color-primary);
@@ -74,6 +74,32 @@
 .tg-alert--gift-2 { border-color: var(--color-accent); box-shadow: var(--glow-md) var(--color-accent); }
 .tg-alert--gift-3 { border-color: var(--color-primary); box-shadow: var(--glow-lg) var(--color-primary); }
 
+/* Jokko donation */
+.tg-alert--donation { max-width: 72%; }
+.tg-alert__amount {
+  font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1;
+  color: var(--color-accent); font-variant-numeric: tabular-nums;
+}
+.tg-alert--fullscreen .tg-alert__amount { font-size: 72px; }
+.tg-alert__message {
+  font-size: 20px; line-height: 1.3; color: var(--color-text); max-width: 760px;
+  overflow-wrap: anywhere;
+}
+.tg-alert__chips { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-1); }
+.tg-alert--fullscreen .tg-alert__chips { justify-content: center; }
+.tg-chip {
+  font-family: var(--font-display); font-weight: 700; font-size: 14px; letter-spacing: 0.08em;
+  padding: 3px 10px; border: 1px solid var(--color-muted); border-radius: var(--radius-cut-sm);
+  color: var(--color-text); background: color-mix(in srgb, var(--color-background) 70%, transparent);
+}
+.tg-chip--rank-bronze { border-color: #c98a4b; color: #f0b27a; }
+.tg-chip--rank-argent { border-color: #c9d3dc; color: #e6edf3; }
+.tg-chip--rank-or { border-color: #f5c443; color: #f5c443; }
+.tg-chip--rank-diamant { border-color: #7fe7ff; color: #bff4ff; box-shadow: var(--glow-sm) #7fe7ff; }
+.tg-chip--test { border-color: var(--color-danger); color: var(--color-danger); }
+.tg-stage[data-layout="vertical"] .tg-alert--donation { max-width: 88%; }
+.tg-stage[data-layout="vertical"] .tg-alert--fullscreen.tg-alert--donation { width: 88%; height: 38%; }
+
 /* Raid / host portal */
 .tg-alert--raid { flex-direction: column; }
 .tg-alert__portal {
@@ -116,4 +142,13 @@
 [data-motion="reduced"] .tg-alert__portal,
 [data-motion="reduced"] .tg-stage--boost-mode {
   animation: none !important;
+}
+
+/* Big horizontal donations sit in the upper band so they never cover the
+   bottom-right webcam slot, even for the few seconds they play. */
+.tg-stage[data-layout="horizontal"] .tg-alert--fullscreen.tg-alert--donation {
+  width: 60%;
+  height: 40%;
+  top: 120px;
+  bottom: auto;
 }

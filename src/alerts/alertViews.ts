@@ -1,6 +1,7 @@
 import { el } from "@/core/dom";
 import { Mascot } from "@/components/Mascot";
 import { emblem } from "@/components/Emblem";
+import { configStore } from "@/core/configLoader";
 import type { TerangaEvent } from "@/types";
 
 export interface AlertView {
@@ -24,7 +25,7 @@ export function followAlert(event: TerangaEvent): AlertView {
         children: [
           el("span", { class: "tg-alert__title", text: "NOUVEAU FOLLOW" }),
           el("span", { class: "tg-alert__name", text: name(event) }),
-          el("span", { class: "tg-alert__sub", text: "Bienvenue dans la Flaa's Squad" }),
+          el("span", { class: "tg-alert__sub", text: `Bienvenue dans la ${configStore.get().communityName}` }),
         ],
       }),
     ],
@@ -140,7 +141,7 @@ export function energyFullAlert(): AlertView {
     children: [
       el("div", { class: "tg-alert__glow" }),
       mascot.node,
-      el("div", { class: "tg-alert__body", children: [el("span", { class: "tg-alert__title tg-alert__title--xl", text: "MODE FLAA'S ACTIVÉ" }), el("span", { class: "tg-alert__sub", text: "Dama Ready" })] }),
+      el("div", { class: "tg-alert__body", children: [el("span", { class: "tg-alert__title tg-alert__title--xl", text: "MODE TERANGA ACTIVÉ" }), el("span", { class: "tg-alert__sub", text: "Dama Ready" })] }),
     ],
   });
   return { node, durationMs: 6000 };
@@ -151,8 +152,60 @@ export function likeGoalAlert(): AlertView {
     class: "tg-alert tg-alert--like-goal",
     children: [
       el("div", { class: "tg-alert__glow" }),
-      el("div", { class: "tg-alert__body", children: [el("span", { class: "tg-alert__title", text: "OBJECTIF LIKES ATTEINT" }), el("span", { class: "tg-alert__sub", text: "Merci Flaa's Squad" })] }),
+      el("div", { class: "tg-alert__body", children: [el("span", { class: "tg-alert__title", text: "OBJECTIF LIKES ATTEINT" }), el("span", { class: "tg-alert__sub", text: `Merci ${configStore.get().communityName}` })] }),
     ],
   });
   return { node, durationMs: 4000 };
+}
+
+const FCFA = new Intl.NumberFormat("fr-FR");
+
+/** Donation tiers escalate like gifts: small chip → accent card → controlled centre stage. */
+export function donationTier(amount: number): 1 | 2 | 3 {
+  if (amount >= 10_000) return 3;
+  if (amount >= 2_500) return 2;
+  return 1;
+}
+
+/**
+ * Jokko mobile-money donation. Every string coming from a fan is rendered
+ * through textContent (via el()), never as HTML; the server has already
+ * moderated the message and the streamer can turn messages off entirely.
+ */
+export function donationAlert(event: TerangaEvent): AlertView {
+  const p = event.payload;
+  const amount = Number(p.amount ?? 0);
+  const tier = donationTier(amount);
+  const message = String(p.message ?? "").slice(0, 140);
+  const rank = p.rank as { id?: string; label?: string } | null | undefined;
+  const mascot = new Mascot(tier === 3 ? "glasses" : "happy");
+  mascot.node.classList.add("tg-alert__mascot");
+  const chips = el("div", {
+    class: "tg-alert__chips",
+    children: [
+      el("span", { class: "tg-chip tg-chip--method", text: String(p.methodLabel ?? "Mobile money") }),
+      rank?.label ? el("span", { class: `tg-chip tg-chip--rank tg-chip--rank-${rank.id ?? "bronze"}`, text: `RANG ${rank.label.toUpperCase()}` }) : null,
+      p.test ? el("span", { class: "tg-chip tg-chip--test", text: "TEST" }) : null,
+    ],
+  });
+  const node = el("div", {
+    class: `tg-alert tg-alert--donation tg-alert--gift-${tier} ${tier === 3 ? "tg-alert--fullscreen" : ""}`,
+    children: [
+      el("div", { class: "tg-alert__glow" }),
+      mascot.node,
+      el("div", {
+        class: "tg-alert__body",
+        children: [
+          el("span", { class: "tg-alert__title", text: "NOUVEAU SOUTIEN" }),
+          el("span", { class: "tg-alert__amount", text: `${FCFA.format(amount)} F CFA` }),
+          el("span", { class: "tg-alert__name", text: name(event, "Anonyme") }),
+          message ? el("span", { class: "tg-alert__message", text: `« ${message} »` }) : null,
+          chips,
+        ],
+      }),
+    ],
+  });
+  // Long enough to read the message on a phone, never long enough to camp on the face cam.
+  const durationMs = Math.min(9000, (tier === 3 ? 6500 : 5000) + message.length * 25);
+  return { node, durationMs };
 }

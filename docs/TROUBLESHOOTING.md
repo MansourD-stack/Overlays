@@ -2,7 +2,7 @@
 
 ## L'overlay reste vide / transparent dans OBS ou le navigateur
 
-- Vérifiez que `npm run dev` tourne toujours dans un terminal (ou que `npm run preview` tourne après un `npm run build`).
+- Vérifiez que `npm run dev` tourne toujours dans un terminal (ou que `npm start` tourne après un `npm run build`).
 - Vérifiez l'URL : le paramètre `scene` doit correspondre à un id existant (voir les tableaux dans `docs/OBS_SETUP.md` / `docs/TIKTOK_LIVE_STUDIO_SETUP.md`). Un id inconnu retombe silencieusement sur une scène par défaut plutôt que d'afficher une erreur.
 - Dans OBS, essayez **clic droit sur la source → Actualiser**.
 
@@ -32,7 +32,28 @@
 
 ## Sécurité du serveur de développement
 
-`npm run dev` utilise Vite en mode développement, prévu pour un usage **strictement local** (le même ordinateur qui fait tourner OBS/TikTok LIVE Studio). Ne l'exposez pas sur un réseau public ou non fiable : comme tout serveur de dev basé sur esbuild/Vite, il fait confiance aux requêtes provenant du navigateur qui s'y connecte. Pour un usage figé sans surveiller un terminal, préférez `npm run build` + `npm run preview`.
+`npm run dev` utilise Vite en mode développement, prévu pour un usage **strictement local** (le même ordinateur qui fait tourner OBS/TikTok LIVE Studio). Ne l'exposez pas sur un réseau public ou non fiable : comme tout serveur de dev basé sur esbuild/Vite, il fait confiance aux requêtes provenant du navigateur qui s'y connecte. Pour un usage figé ou un serveur accessible à des fans, utilise `npm run build` + `npm start` (voir `docs/JOKKO_PAIEMENTS.md`, section mise en production).
+
+## Jokko : aucune alerte de don n'apparaît sur l'overlay
+
+- L'URL de la Browser Source contient-elle `&key=…` ? Copie-la depuis le tableau de bord (carte **Overlay & scènes**). Si tu as régénéré la clé, l'ancienne URL ne reçoit plus rien.
+- Clique **Alerte de test** dans le tableau de bord : si elle s'affiche, l'overlay est bien branché et le problème vient du paiement (voir ci-dessous).
+- Les alertes passent une par une : plusieurs dons rapprochés s'affichent à la suite, jamais superposés.
+- Les messages des fans ne s'affichent pas ? Vérifie **Réglages → Modération → Afficher les messages**.
+
+## Jokko : le paiement reste « Confirmation en cours… »
+
+- Mode test : le fan doit cliquer **Valider le paiement** sur l'écran du simulateur.
+- PayDunya : `JOKKO_PUBLIC_URL` doit être une adresse HTTPS joignable depuis internet (tunnel en local), sinon le webhook n'arrive jamais. Le serveur interroge aussi PayDunya directement pendant que la page du fan attend ; si ça bloque encore, regarde les messages `[jokko]` dans le terminal.
+- Un paiement marqué **Échoué** alors que le fan a payé : le montant confirmé par PayDunya ne correspondait pas (message « montant incohérent » dans le terminal). À vérifier dans le tableau de bord PayDunya.
+
+## Jokko : « Trop de tentatives. Patiente une minute. »
+
+- La création de paiement est limitée à 10 par minute et par adresse IP. Derrière un reverse proxy, définis `JOKKO_TRUST_PROXY=1`, sinon tous les fans partagent la même limite.
+
+## Jokko : le panneau `/control` ne pilote pas mon overlay avec clé
+
+- Ouvre `/control` dans le **même navigateur** où tu es connecté au tableau de bord : il rejoint alors ton canal Jokko. Sans connexion, il pilote uniquement les overlays sans clé (mode local).
 
 ## Repartir de zéro
 

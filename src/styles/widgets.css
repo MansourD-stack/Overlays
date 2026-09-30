@@ -66,7 +66,7 @@
 .tg-timer__label { color: var(--color-muted); font-size: 14px; margin-right: 6px; }
 .tg-timer__value { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 700; }
 
-/* Flaa's Radar */
+/* Radar Teranga */
 .tg-radar { width: 240px; display: flex; flex-direction: column; gap: 6px; }
 .tg-radar__title { font-family: var(--font-display); font-size: 14px; letter-spacing: 0.08em; color: var(--color-primary); }
 .tg-radar__row { display: flex; justify-content: space-between; font-size: 15px; }
@@ -83,3 +83,6 @@
   0%, 100% { box-shadow: var(--glow-sm) var(--color-danger); }
   50% { box-shadow: var(--glow-md) var(--color-danger); }
 }
+
+/* Last-event chips appear only once they have something to say. */
+.tg-last-event--empty { display: none !important; }

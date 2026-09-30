@@ -17,7 +17,9 @@ interface LastEventOptions {
 export function createLastEventWidget(opts: LastEventOptions): Widget {
   const nameEl = el("span", { class: "tg-last-event__name", text: opts.fallback });
   const node = glowFrame({
-    class: `tg-widget tg-last-event tg-last-event--${opts.id}`,
+    // Starts empty (hidden): a column of "En attente…" chips is noise, and on
+    // Jokko-hosted overlays follow/sub/raid may never be fed at all.
+    class: `tg-widget tg-last-event tg-last-event--${opts.id} tg-last-event--empty`,
     variant: "chip",
     children: [
       el("span", { class: "tg-last-event__dot" }),
@@ -31,7 +33,10 @@ export function createLastEventWidget(opts: LastEventOptions): Widget {
     node,
     onEvent(event) {
       if (!opts.matches.includes(event.type)) return;
-      nameEl.textContent = opts.extract(event.payload) || opts.fallback;
+      const value = opts.extract(event.payload);
+      if (!value) return;
+      nameEl.textContent = value;
+      node.classList.remove("tg-last-event--empty");
       node.classList.remove("tg-pop");
       void node.offsetWidth;
       node.classList.add("tg-pop");

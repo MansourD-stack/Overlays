@@ -76,8 +76,31 @@ export function alertSimulatorPanel(): HTMLElement {
   });
 
   const donationInput = el("input", { class: "tg-ctrl-input", attrs: { type: "text", placeholder: "Nom du donateur" } });
-  const sendDonationBtn = testButton("Simuler don", () => {
-    eventBus.send({ kind: "event", event: makeEvent("custom", { kind: "donation", username: donationInput.value.trim() || randomName() }) });
+  const donationAmount = el("select", {
+    class: "tg-ctrl-input",
+    children: [500, 1000, 2500, 5000, 15000].map((a) => el("option", { text: `${a} F`, attrs: { value: String(a) } })),
+  });
+  const sendDonationBtn = testButton("Simuler don Jokko", () => {
+    const amount = Number(donationAmount.value);
+    const methods = [["wave", "Wave"], ["orange-money", "Orange Money"], ["free-money", "Free Money"]];
+    const [method, methodLabel] = methods[Math.floor(Math.random() * methods.length)];
+    const ranks = [["bronze", "Bronze"], ["argent", "Argent"], ["or", "Or"], ["diamant", "Diamant"]];
+    const [rankId, rankLabel] = ranks[Math.floor(Math.random() * ranks.length)];
+    const c = configStore.get();
+    pushConfig({ goals: { donations: { current: c.goals.donations.current + amount } } });
+    eventBus.send({
+      kind: "event",
+      event: makeEvent("donation", {
+        username: donationInput.value.trim() || randomName(),
+        amount,
+        currency: "XOF",
+        method,
+        methodLabel,
+        message: "Nio far ! Continue comme ça 🔥",
+        rank: { id: rankId, label: rankLabel },
+        test: true,
+      }),
+    });
     donationInput.value = "";
   });
 
@@ -91,7 +114,7 @@ export function alertSimulatorPanel(): HTMLElement {
       hostRow,
       el("div", { class: "tg-ctrl-row", children: [el("span", { class: "tg-ctrl-row__title", text: "Message important" }), messageInput, sendMessageBtn] }),
       el("div", { class: "tg-ctrl-row", children: [el("span", { class: "tg-ctrl-row__title", text: "Viewers" }), viewersInput, sendViewersBtn] }),
-      el("div", { class: "tg-ctrl-row", children: [el("span", { class: "tg-ctrl-row__title", text: "Dernier don" }), donationInput, sendDonationBtn] }),
+      el("div", { class: "tg-ctrl-row", children: [el("span", { class: "tg-ctrl-row__title", text: "Don mobile money" }), donationInput, donationAmount, sendDonationBtn] }),
       el("div", { class: "tg-ctrl-row", children: [likeWaveBtn] }),
     ],
   });

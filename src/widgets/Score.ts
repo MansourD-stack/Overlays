@@ -5,12 +5,13 @@ import type { StreamerConfig } from "@/types";
 
 export function createScoreWidget(): Widget {
   const teamEl = el("span", { class: "tg-score__value", text: "0" });
+  const teamLabel = el("span", { class: "tg-score__label", text: "ÉQUIPE" });
   const oppEl = el("span", { class: "tg-score__value", text: "0" });
   const node = glowFrame({
     class: "tg-widget tg-score",
     variant: "hud",
     children: [
-      el("div", { class: "tg-score__side", children: [el("span", { class: "tg-score__label", text: "FLAA'S" }), teamEl] }),
+      el("div", { class: "tg-score__side", children: [teamLabel, teamEl] }),
       el("span", { class: "tg-score__sep", text: "—" }),
       el("div", { class: "tg-score__side", children: [el("span", { class: "tg-score__label", text: "ADVERSAIRE" }), oppEl] }),
     ],
@@ -20,6 +21,7 @@ export function createScoreWidget(): Widget {
     id: "score",
     node,
     onConfig(config: StreamerConfig) {
+      teamLabel.textContent = (config.communityName || "ÉQUIPE").toUpperCase();
       teamEl.textContent = String(config.score.team);
       oppEl.textContent = String(config.score.opponent);
     },
