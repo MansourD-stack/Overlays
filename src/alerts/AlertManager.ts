@@ -6,6 +6,7 @@ import {
   followAlert,
   subAlert,
   giftAlert,
+  donationAlert,
   raidAlert,
   likeWaveAlert,
   likeGoalAlert,
@@ -15,7 +16,7 @@ import {
   type AlertView,
 } from "./alertViews";
 
-const QUEUEABLE: TerangaEventType[] = ["follow", "sub", "gift", "raid", "host", "victory", "defeat", "energy_full", "like_goal"];
+const QUEUEABLE: TerangaEventType[] = ["follow", "sub", "gift", "donation", "raid", "host", "victory", "defeat", "energy_full", "like_goal"];
 
 function buildView(event: TerangaEvent): AlertView | null {
   switch (event.type) {
@@ -25,6 +26,8 @@ function buildView(event: TerangaEvent): AlertView | null {
       return subAlert(event);
     case "gift":
       return giftAlert(event);
+    case "donation":
+      return donationAlert(event);
     case "raid":
     case "host":
       return raidAlert(event);
@@ -42,8 +45,10 @@ function buildView(event: TerangaEvent): AlertView | null {
 }
 
 /** Mounts the alert layer onto a scene stage and wires it to the shared
- *  event bus + alert queue so at most one alert plays at a time. */
-export function mountAlertManager(stage: HTMLElement) {
+ *  event bus + alert queue so at most one alert plays at a time. Returns a
+ *  disposer: a scene remount must not leave a second listener behind
+ *  (that would queue every alert twice). */
+export function mountAlertManager(stage: HTMLElement): () => void {
   const layer = el("div", { class: "tg-alert-layer" });
   stage.appendChild(layer);
 
@@ -67,7 +72,7 @@ export function mountAlertManager(stage: HTMLElement) {
     },
   });
 
-  eventBus.on((message) => {
+  const offQueue = eventBus.on((message) => {
     if (message.kind !== "event") return;
     if (QUEUEABLE.includes(message.event.type)) alertQueue.push(message.event);
   });
@@ -75,7 +80,7 @@ export function mountAlertManager(stage: HTMLElement) {
   // Likes come in bursts and are intentionally NOT queued one-by-one — a
   // rolling wave animation instead, throttled so it never overlaps itself.
   let waveActive = false;
-  eventBus.on((message) => {
+  const offWave = eventBus.on((message) => {
     if (message.kind !== "event" || message.event.type !== "custom" || message.event.payload.kind !== "like_wave") return;
     if (waveActive) return;
     waveActive = true;
@@ -90,4 +95,9 @@ export function mountAlertManager(stage: HTMLElement) {
       }, 420);
     }, view.durationMs);
   });
+
+  return () => {
+    offQueue();
+    offWave();
+  };
 }

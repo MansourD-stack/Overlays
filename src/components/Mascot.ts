@@ -11,13 +11,13 @@ export type MascotState =
   | "glasses";
 
 const ASSET: Record<MascotState, string> = {
-  idle: "/assets/mascot/mascot-idle.svg",
-  happy: "/assets/mascot/mascot-happy.svg",
-  shocked: "/assets/mascot/mascot-shocked.svg",
-  angry: "/assets/mascot/mascot-angry.svg",
-  sleep: "/assets/mascot/mascot-sleep.svg",
-  fire: "/assets/mascot/mascot-fire.svg",
-  glasses: "/assets/mascot/mascot-glasses.svg",
+  idle: `${import.meta.env.BASE_URL}assets/mascot/mascot-idle.svg`,
+  happy: `${import.meta.env.BASE_URL}assets/mascot/mascot-happy.svg`,
+  shocked: `${import.meta.env.BASE_URL}assets/mascot/mascot-shocked.svg`,
+  angry: `${import.meta.env.BASE_URL}assets/mascot/mascot-angry.svg`,
+  sleep: `${import.meta.env.BASE_URL}assets/mascot/mascot-sleep.svg`,
+  fire: `${import.meta.env.BASE_URL}assets/mascot/mascot-fire.svg`,
+  glasses: `${import.meta.env.BASE_URL}assets/mascot/mascot-glasses.svg`,
 };
 
 /**

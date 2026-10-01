@@ -1,6 +1,6 @@
 import type { SceneEntry } from "@/scenes/types";
 
-const COMMON_WIDGETS = ["lastFollower", "lastGift", "raidHost", "importantMessage", "gameInfo", "viewers", "energyTeranga"];
+const COMMON_WIDGETS = ["lastFollower", "lastDonation", "lastGift", "raidHost", "importantMessage", "gameInfo", "viewers", "energyTeranga", "goalDonations"];
 
 export const VERTICAL_SCENES: SceneEntry[] = [
   {
@@ -31,7 +31,7 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     webcamSlot: "full",
     ctaZone: true,
     clean: false,
-    widgets: ["lastFollower", "importantMessage", "goalFollowers"],
+    widgets: ["lastFollower", "importantMessage", "goalFollowers", "goalDonations"],
   },
   {
     id: "tiktok-justchatting",
@@ -41,7 +41,7 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     webcamSlot: "top",
     ctaZone: true,
     clean: false,
-    widgets: ["lastFollower", "lastGift", "importantMessage", "gameInfo"],
+    widgets: ["lastFollower", "lastGift", "importantMessage", "gameInfo", "supportQr"],
   },
   {
     id: "tiktok-starting-soon",
@@ -51,7 +51,7 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     webcamSlot: "none",
     ctaZone: false,
     clean: false,
-    widgets: ["timer", "goalFollowers"],
+    widgets: ["timer", "goalFollowers", "supportQr"],
     heroTitle: "ÇA COMMENCE BIENTÔT",
     heroSubtitle: "Dama Ready",
     mascotState: "idle",
@@ -64,7 +64,7 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     webcamSlot: "none",
     ctaZone: false,
     clean: false,
-    widgets: ["timer"],
+    widgets: ["timer", "supportQr"],
     heroTitle: "PAUSE RAPIDE",
     heroSubtitle: "On revient vite",
     mascotState: "sleep",
@@ -77,8 +77,8 @@ export const VERTICAL_SCENES: SceneEntry[] = [
     webcamSlot: "none",
     ctaZone: false,
     clean: false,
-    widgets: [],
-    heroTitle: "MERCI FLAA'S SQUAD",
+    widgets: ["supportQr"],
+    heroTitle: "MERCI {community}",
     heroSubtitle: "À très vite",
     mascotState: "happy",
     showSocials: true,

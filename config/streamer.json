@@ -1,5 +1,6 @@
 {
   "pseudo": "Flaa's Squad",
+  "communityName": "Flaa's Squad",
   "tagline": "Dama Ready",
   "game": "Free Fire",
   "socials": {
@@ -12,21 +13,67 @@
   "performanceProfile": "balanced",
   "reducedMotion": false,
   "goals": {
-    "followers": { "current": 42, "target": 100, "label": "FOLLOWERS" },
-    "likes": { "current": 1200, "target": 5000, "label": "LIKES" },
-    "gifts": { "current": 8, "target": 50, "label": "CADEAUX" }
+    "followers": {
+      "current": 42,
+      "target": 100,
+      "label": "FOLLOWERS"
+    },
+    "likes": {
+      "current": 1200,
+      "target": 5000,
+      "label": "LIKES"
+    },
+    "gifts": {
+      "current": 8,
+      "target": 50,
+      "label": "CADEAUX"
+    },
+    "donations": {
+      "current": 0,
+      "target": 50000,
+      "label": "OBJECTIF DONS"
+    }
   },
   "webcam": {
     "mode": "top",
     "floatShape": "hex",
     "visible": true
   },
-  "energyTeranga": { "current": 35, "max": 100 },
-  "bossFight": { "active": false, "bossName": "RANKED BOSS", "hp": 100, "maxHp": 100, "phase": 1, "danger": false },
-  "score": { "team": 0, "opponent": 0, "roundsWon": 0, "roundsTotal": 5 },
-  "ranking": { "position": 1, "of": 4 },
-  "lastSupporter": { "name": "", "type": "follow" },
-  "easterEggs": { "enabled": true, "dakarMode": true, "chatCommand": "!flaas", "keyCombo": "ctrl+shift+t" },
+  "energyTeranga": {
+    "current": 35,
+    "max": 100
+  },
+  "bossFight": {
+    "active": false,
+    "bossName": "RANKED BOSS",
+    "hp": 100,
+    "maxHp": 100,
+    "phase": 1,
+    "danger": false
+  },
+  "score": {
+    "team": 0,
+    "opponent": 0,
+    "roundsWon": 0,
+    "roundsTotal": 5
+  },
+  "ranking": {
+    "position": 1,
+    "of": 4
+  },
+  "lastSupporter": {
+    "name": "",
+    "type": "follow"
+  },
+  "support": {
+    "url": ""
+  },
+  "easterEggs": {
+    "enabled": true,
+    "dakarMode": true,
+    "chatCommand": "!flaas",
+    "keyCombo": "ctrl+shift+t"
+  },
   "widgetDocks": {
     "lastFollower": "top-left",
     "lastSub": "top-left",
@@ -45,28 +92,163 @@
     "timer": "top-center",
     "terangaRadar": "top-right",
     "energyTeranga": "bottom-left",
-    "bossFight": "top-center"
+    "bossFight": "top-center",
+    "goalDonations": "bottom-right",
+    "supportQr": "bottom-right"
   },
   "widgetScale": {},
   "widgetColors": {},
   "widgets": {
-    "lastFollower": { "enabled": true, "scenes": ["*"] },
-    "lastSub": { "enabled": true, "scenes": ["*"] },
-    "lastDonation": { "enabled": true, "scenes": ["*"] },
-    "lastGift": { "enabled": true, "scenes": ["*"] },
-    "raidHost": { "enabled": true, "scenes": ["*"] },
-    "importantMessage": { "enabled": true, "scenes": ["*"] },
-    "goalFollowers": { "enabled": true, "scenes": ["twitch-starting-soon", "tiktok-starting-soon", "tiktok-facecam"] },
-    "goalLikes": { "enabled": true, "scenes": ["tiktok-likes-goal", "tiktok-gameplay", "tiktok-gameplay-webcam"] },
-    "goalGifts": { "enabled": true, "scenes": ["tiktok-gifts-goal", "tiktok-gameplay-webcam"] },
-    "viewers": { "enabled": true, "scenes": ["*"] },
-    "score": { "enabled": true, "scenes": ["twitch-gameplay-webcam", "twitch-gameplay-nowebcam", "twitch-tournament", "tiktok-battle"] },
-    "roundsWon": { "enabled": true, "scenes": ["twitch-tournament", "tiktok-battle"] },
-    "ranking": { "enabled": true, "scenes": ["twitch-tournament"] },
-    "gameInfo": { "enabled": true, "scenes": ["*"] },
-    "timer": { "enabled": true, "scenes": ["twitch-starting-soon", "twitch-brb", "tiktok-starting-soon", "tiktok-pause"] },
-    "terangaRadar": { "enabled": true, "scenes": ["twitch-gameplay-webcam", "twitch-gameplay-nowebcam", "tiktok-gameplay-webcam"] },
-    "energyTeranga": { "enabled": true, "scenes": ["*"] },
-    "bossFight": { "enabled": false, "scenes": ["twitch-gameplay-webcam", "twitch-gameplay-nowebcam", "tiktok-gameplay"] }
+    "lastFollower": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "lastSub": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "lastDonation": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "lastGift": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "raidHost": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "importantMessage": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "goalFollowers": {
+      "enabled": true,
+      "scenes": [
+        "twitch-starting-soon",
+        "tiktok-starting-soon",
+        "tiktok-facecam"
+      ]
+    },
+    "goalLikes": {
+      "enabled": true,
+      "scenes": [
+        "tiktok-likes-goal",
+        "tiktok-gameplay",
+        "tiktok-gameplay-webcam"
+      ]
+    },
+    "goalGifts": {
+      "enabled": true,
+      "scenes": [
+        "tiktok-gifts-goal",
+        "tiktok-gameplay-webcam"
+      ]
+    },
+    "viewers": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "score": {
+      "enabled": true,
+      "scenes": [
+        "twitch-gameplay-webcam",
+        "twitch-gameplay-nowebcam",
+        "twitch-tournament",
+        "tiktok-battle"
+      ]
+    },
+    "roundsWon": {
+      "enabled": true,
+      "scenes": [
+        "twitch-tournament",
+        "tiktok-battle"
+      ]
+    },
+    "ranking": {
+      "enabled": true,
+      "scenes": [
+        "twitch-tournament"
+      ]
+    },
+    "gameInfo": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "timer": {
+      "enabled": true,
+      "scenes": [
+        "twitch-starting-soon",
+        "twitch-brb",
+        "tiktok-starting-soon",
+        "tiktok-pause"
+      ]
+    },
+    "terangaRadar": {
+      "enabled": true,
+      "scenes": [
+        "twitch-gameplay-webcam",
+        "twitch-gameplay-nowebcam",
+        "tiktok-gameplay-webcam"
+      ]
+    },
+    "energyTeranga": {
+      "enabled": true,
+      "scenes": [
+        "*"
+      ]
+    },
+    "bossFight": {
+      "enabled": false,
+      "scenes": [
+        "twitch-gameplay-webcam",
+        "twitch-gameplay-nowebcam",
+        "tiktok-gameplay"
+      ]
+    },
+    "goalDonations": {
+      "enabled": true,
+      "scenes": [
+        "twitch-gameplay-webcam",
+        "twitch-gameplay-nowebcam",
+        "twitch-justchatting",
+        "twitch-starting-soon",
+        "tiktok-gameplay",
+        "tiktok-gameplay-webcam",
+        "tiktok-justchatting",
+        "tiktok-facecam"
+      ]
+    },
+    "supportQr": {
+      "enabled": true,
+      "scenes": [
+        "twitch-starting-soon",
+        "twitch-justchatting",
+        "twitch-brb",
+        "twitch-ending",
+        "twitch-community",
+        "tiktok-justchatting",
+        "tiktok-starting-soon",
+        "tiktok-pause",
+        "tiktok-ending"
+      ]
+    }
   }
 }

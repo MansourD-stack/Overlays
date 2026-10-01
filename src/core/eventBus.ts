@@ -15,15 +15,22 @@ class TerangaEventBus {
   private handlers = new Set<Handler>();
   private reconnectDelay = 1000;
   private connected = false;
+  private key: string | null = null;
+  private openHandlers = new Set<() => void>();
 
-  connect() {
+  /** `key` = Jokko overlay key (hosted, per-streamer channel, receive-only).
+   *  Without it the bus joins the logged-in streamer's channel, or the local one. */
+  connect(key: string | null = this.key) {
+    this.key = key;
     if (this.socket) return;
     try {
       const proto = window.location.protocol === "https:" ? "wss" : "ws";
-      this.socket = new WebSocket(`${proto}://${window.location.host}/overlay-bridge`);
+      const query = key ? `?key=${encodeURIComponent(key)}` : "";
+      this.socket = new WebSocket(`${proto}://${window.location.host}/overlay-bridge${query}`);
       this.socket.addEventListener("open", () => {
         this.connected = true;
         this.reconnectDelay = 1000;
+        for (const handler of this.openHandlers) handler();
       });
       this.socket.addEventListener("message", (ev) => {
         try {
@@ -55,6 +62,12 @@ class TerangaEventBus {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
     }
+  }
+
+  /** Runs on every (re)connection — used to resync state missed while offline. */
+  onOpen(handler: () => void): () => void {
+    this.openHandlers.add(handler);
+    return () => this.openHandlers.delete(handler);
   }
 
   on(handler: Handler): () => void {

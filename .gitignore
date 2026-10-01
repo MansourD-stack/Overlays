@@ -1,6 +1,10 @@
 node_modules
 dist
+dist-server
+data
 .DS_Store
 *.local
 .env
 .env.*
+!.env.example
+dist-demo

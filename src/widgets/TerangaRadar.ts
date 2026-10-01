@@ -14,7 +14,7 @@ export function createTerangaRadarWidget(): Widget {
     class: "tg-widget tg-radar",
     variant: "hud",
     children: [
-      el("div", { class: "tg-radar__title", text: "FLAA'S RADAR" }),
+      el("div", { class: "tg-radar__title", text: "RADAR TERANGA" }),
       el("div", { class: "tg-radar__row", children: [el("span", { class: "tg-radar__key", text: "Viewers" }), viewersEl] }),
       el("div", { class: "tg-radar__row", children: [el("span", { class: "tg-radar__key", text: "Énergie" }), energyEl] }),
       el("div", { class: "tg-radar__row tg-radar__row--event", children: [el("span", { class: "tg-radar__key", text: "Événement" }), eventEl] }),
@@ -41,7 +41,8 @@ export function createTerangaRadarWidget(): Widget {
         host: "Host",
         victory: "Victoire",
         defeat: "Défaite",
-        energy_full: "Énergie Flaa's pleine",
+        energy_full: "Énergie Teranga pleine",
+        donation: "Nouveau soutien",
         like_goal: "Objectif likes atteint",
       };
       if (labels[event.type]) eventEl.textContent = labels[event.type];

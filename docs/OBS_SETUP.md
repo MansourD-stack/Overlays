@@ -1,5 +1,13 @@
 # Installation dans OBS Studio
 
+## 0. Avec un compte Jokko (recommandé)
+
+Ouvre `http://localhost:5173/dashboard` (ou l'adresse de ton serveur Jokko), crée ton compte, puis copie les URLs de la carte **Overlay & scènes**. Elles contiennent ta **clé d'overlay** (`&key=…`) : l'overlay affiche alors ton nom, ton thème, ta jauge de dons et les alertes de tes vrais soutiens.
+
+- Toute scène du tableau ci-dessous fonctionne avec ta clé : ajoute simplement `&key=<ta-clé>` à l'URL.
+- La clé est en lecture seule (elle ne permet pas d'envoyer de fausses alertes). Si elle a fuité, régénère-la depuis le tableau de bord et remplace l'URL dans OBS.
+- Sans clé, l'overlay fonctionne en **mode local** (configuration `config/streamer.json` + panneau `/control`), comme avant Jokko.
+
 ## 1. Lancer le projet
 
 ```bash

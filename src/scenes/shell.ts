@@ -16,6 +16,7 @@ const DOCKS: Dock[] = ["top-left", "top-center", "top-right", "bottom-left", "bo
 const MASCOT_REACTION: Record<string, { state: MascotState; holdMs: number }> = {
   follow: { state: "happy", holdMs: 2500 },
   sub: { state: "happy", holdMs: 3000 },
+  donation: { state: "happy", holdMs: 3500 },
   raid: { state: "happy", holdMs: 3000 },
   host: { state: "happy", holdMs: 3000 },
 };
@@ -145,7 +146,7 @@ export function mountScene(root: HTMLElement, def: SceneDefinition, extras: Scen
           el("div", {
             class: "tg-hero__text",
             children: [
-              el("span", { class: "tg-hero__title", text: extras.heroTitle }),
+              el("span", { class: "tg-hero__title", text: extras.heroTitle.replace("{community}", config.communityName.toUpperCase()) }),
               extras.heroSubtitle ? el("span", { class: "tg-hero__subtitle", text: extras.heroSubtitle }) : null,
             ],
           }),
@@ -157,7 +158,7 @@ export function mountScene(root: HTMLElement, def: SceneDefinition, extras: Scen
     stage.appendChild(mascot.node);
   }
 
-  mountAlertManager(stage);
+  unsubscribers.push(mountAlertManager(stage));
 
   const offEvent = eventBus.on((message) => {
     if (message.kind !== "event") return;

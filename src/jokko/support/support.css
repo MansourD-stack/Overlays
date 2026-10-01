@@ -1,0 +1,61 @@
+/* The support page wears the streamer's theme (--color-* from src/themes),
+   so fans land in the same universe as the stream. */
+.jk-page--support body {
+  background:
+    radial-gradient(120% 60% at 50% 0%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 70%),
+    var(--color-background);
+  color: var(--color-text);
+}
+.jk-page--support { --jk-primary: var(--color-primary); --jk-accent: var(--color-accent); --jk-bg: var(--color-background); --jk-muted: var(--color-muted); --jk-text: var(--color-text); --jk-primary-ink: var(--color-background); }
+
+.jk-support { max-width: 480px; margin: 0 auto; padding: 20px 16px 32px; display: flex; flex-direction: column; gap: 18px; }
+
+.jk-support__hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 12px; }
+.jk-support__avatar {
+  width: 84px; height: 84px; display: grid; place-items: center; font-size: 30px; font-weight: 850;
+  color: var(--color-background); background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%);
+}
+.jk-support__name { margin: 4px 0 0; font-weight: 700; color: var(--color-primary); letter-spacing: 0.04em; text-transform: uppercase; font-size: 14px; }
+.jk-support__hero h1 { font-size: 26px; font-weight: 850; letter-spacing: -0.02em; }
+.jk-support__message { margin: 0; color: var(--color-muted); }
+.jk-support__goal { width: 100%; margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.jk-support__goal-head { justify-content: space-between; font-size: 14px; }
+.jk-support__goal-head span { color: var(--color-muted); font-weight: 700; letter-spacing: 0.04em; }
+
+.jk-support__form { background: color-mix(in srgb, var(--color-background-alt, #111) 88%, transparent); border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent); border-radius: 18px; padding: 18px; }
+.jk-fieldset { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.jk-fieldset legend { font-weight: 750; margin-bottom: 10px; padding: 0; }
+
+.jk-chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.jk-chip {
+  min-height: 52px; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent);
+  background: transparent; color: var(--color-text); font-size: 18px; font-weight: 800; cursor: pointer; font-variant-numeric: tabular-nums;
+}
+.jk-chip[aria-pressed="true"] { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 18%, transparent); box-shadow: 0 0 0 1px var(--color-primary) inset; }
+
+.jk-methods { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.jk-method {
+  display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 16px; border-radius: 12px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--color-text) 20%, transparent); background: transparent; color: var(--color-text); font-size: 17px; font-weight: 750; text-align: left;
+}
+.jk-method[aria-pressed="true"] { border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 18%, transparent); box-shadow: 0 0 0 1px var(--color-primary) inset; }
+.jk-method__dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+.jk-method--wave .jk-method__dot { background: #36c2f2; }
+.jk-method--orange-money .jk-method__dot { background: #ff7a00; }
+.jk-method--free-money .jk-method__dot { background: #e2173b; }
+
+.jk-support__more summary { cursor: pointer; font-weight: 650; color: var(--color-primary); padding: 6px 0; }
+.jk-support__more[open] summary { margin-bottom: 12px; }
+.jk-support__pay { min-height: 56px; font-size: 18px; }
+
+.jk-support__status { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: stretch; }
+.jk-support__status h2 { font-size: 22px; }
+.jk-support__status p { margin: 0; }
+.jk-support__check { width: 64px; height: 64px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 34px; font-weight: 900; background: var(--jk-success); color: #052e1c; }
+.jk-support__rank { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px; border-radius: 12px; background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+.jk-support__rank-badge { font-size: 18px; padding: 4px 14px; }
+
+.jk-support__footer { text-align: center; font-size: 13px; color: var(--color-muted); }
+.jk-support__footer a { display: inline-flex; align-items: center; gap: 6px; color: var(--color-text); text-decoration: none; font-weight: 700; }
+.jk-support__footer img { width: 18px; height: 18px; }

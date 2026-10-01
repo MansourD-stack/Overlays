@@ -12,7 +12,7 @@ import { webcamPanel } from "./panels/WebcamPanel";
 
 /** The control panel is a distinct page (control.html → /control) — it must
  *  never be reachable from an OBS/TikTok LIVE Studio Browser Source URL. */
-export function mountControlApp(root: HTMLElement) {
+export function mountControlApp(root: HTMLElement, hostedName: string | null = null) {
   const statusDot = el("span", { class: "tg-status-dot" });
   const statusLabel = el("span", { class: "tg-status-label", text: "Connexion…" });
 
@@ -44,7 +44,11 @@ export function mountControlApp(root: HTMLElement) {
 
   const updateStatus = () => {
     statusDot.classList.toggle("tg-status-dot--on", eventBus.isConnected);
-    statusLabel.textContent = eventBus.isConnected ? "Connecté au bus local" : "Hors ligne — relance npm run dev";
+    statusLabel.textContent = !eventBus.isConnected
+      ? "Hors ligne — relance npm run dev"
+      : hostedName
+        ? `Connecté à ta chaîne Jokko (${hostedName})`
+        : "Connecté au bus local";
   };
   updateStatus();
   window.setInterval(updateStatus, 1500);

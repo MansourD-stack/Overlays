@@ -1,16 +1,17 @@
+import "@demo-install";
 import "@/styles/global.css";
 import "@/styles/shell.css";
 import "@/styles/widgets.css";
 import "@/styles/alerts.css";
-import { applyTheme } from "@/themes";
+import { applyTheme, isThemeName } from "@/themes";
 import { applyPerformance } from "@/core/performance";
 import { configStore } from "@/core/configLoader";
-import { parseRoute } from "@/core/router";
+import { parseRoute, resolveSceneId } from "@/core/router";
 import { eventBus } from "@/core/eventBus";
 import { mountScene, findScene } from "@/scenes/mount";
-import type { Layout } from "@/types";
+import type { DeepPartial, Layout, StreamerConfig } from "@/types";
 
-const route = parseRoute("twitch-starting-soon", "horizontal");
+const route = parseRoute();
 let currentScene = route.scene;
 let currentLayout: Layout = route.layout;
 
@@ -22,21 +23,40 @@ function remount() {
   dispose = mountScene(appRoot, currentScene, currentLayout);
 }
 
-function bootstrapTheme() {
-  applyTheme(route.theme ?? configStore.get().theme);
-}
-
-bootstrapTheme();
+applyTheme(route.theme ?? configStore.get().theme);
 applyPerformance({ profile: configStore.get().performanceProfile, reducedMotion: configStore.get().reducedMotion });
 remount();
 
-eventBus.connect();
+/**
+ * Jokko hosted mode (?key=…): the streamer's identity, theme and donation goal
+ * come from the Jokko server instead of this browser's local config, and are
+ * re-synced on every reconnection so an overlay that was offline catches up.
+ */
+async function syncHostedState() {
+  if (!route.key) return;
+  try {
+    const res = await fetch(`/api/overlay/state?key=${encodeURIComponent(route.key)}`);
+    if (!res.ok) return;
+    const state = (await res.json()) as { theme: string; patch: DeepPartial<StreamerConfig> };
+    configStore.patch(state.patch, false);
+    if (!route.theme && isThemeName(state.theme)) {
+      configStore.patch({ theme: state.theme }, false);
+      applyTheme(state.theme);
+    }
+    remount();
+  } catch {
+    /* server unreachable — keep rendering with what we have */
+  }
+}
+
+eventBus.onOpen(() => void syncHostedState());
+eventBus.connect(route.key);
 
 eventBus.on((message) => {
   switch (message.kind) {
     case "scene-change": {
-      currentScene = message.scene;
-      currentLayout = findScene(currentScene)?.layout ?? currentLayout;
+      currentLayout = findScene(message.scene)?.layout ?? currentLayout;
+      currentScene = resolveSceneId(message.scene, currentLayout);
       const params = new URLSearchParams(window.location.search);
       params.set("scene", currentScene);
       params.set("layout", currentLayout);
@@ -61,12 +81,15 @@ eventBus.on((message) => {
       break;
     }
     // Widget docking/scale/color, goals, score, boss fight, socials… all flow
-    // through config-patch. A remount is the simplest way to guarantee scene
-    // structure (which widgets exist, where) always matches the latest config.
-    case "config-patch":
+    // through config-patch. Goal-only patches (every donation) just update the
+    // live widgets; anything structural remounts so the scene always matches config.
+    case "config-patch": {
       configStore.patch(message.patch, false);
-      remount();
+      const keys = Object.keys(message.patch);
+      const liveOnly = keys.every((k) => k === "goals" || k === "lastSupporter");
+      if (!liveOnly) remount();
       break;
+    }
     default:
       break;
   }

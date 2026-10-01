@@ -1,74 +1,74 @@
 import { defineConfig, type Plugin } from "vite";
 import { resolve } from "path";
-import { WebSocketServer, type WebSocket } from "ws";
+import { loadDotEnv, readConfig } from "./server/config";
+import { PROTECTED_PAGES, createJokkoApp, pageFor } from "./server/app";
 
-const BRIDGE_PATH = "/overlay-bridge";
+const root = import.meta.dirname;
 
 /**
- * Local event bridge: relays events between the control panel and every
- * open overlay scene (OBS/TikTok LIVE Studio Browser Sources included).
- * Runs on the same HTTP server Vite already binds — no extra port, so
- * `npm run dev` remains the single command needed to start everything.
+ * Mounts the whole Jokko server (API, payment webhooks, realtime bridge) on
+ * the Vite dev server — `npm run dev` stays the single command a streamer
+ * needs. Production uses the same code through server/main.ts.
  */
-function overlayBridgePlugin(): Plugin {
+function jokkoPlugin(): Plugin {
   return {
-    name: "overlay-bridge",
+    name: "jokko-server",
     configureServer(server) {
-      const wss = new WebSocketServer({ noServer: true });
-      const clients = new Set<WebSocket>();
+      loadDotEnv(root);
+      const app = createJokkoApp(readConfig(root));
+      server.httpServer?.on("upgrade", (req, socket, head) => app.hub.handleUpgrade(req, socket, head));
+      server.httpServer?.on("close", () => app.close());
 
-      server.httpServer?.on("upgrade", (req, socket, head) => {
-        if (!req.url?.startsWith(BRIDGE_PATH)) return;
-        wss.handleUpgrade(req, socket, head, (ws) => {
-          clients.add(ws);
-          ws.on("close", () => clients.delete(ws));
-          ws.on("message", (data) => {
-            for (const client of clients) {
-              if (client !== ws && client.readyState === client.OPEN) {
-                client.send(data.toString());
-              }
+      server.middlewares.use((req, res, next) => {
+        app
+          .handle(req, res)
+          .then((handled) => {
+            if (handled) return;
+            const pathname = (req.url ?? "/").split("?")[0];
+            const page = pageFor(pathname);
+            if (page) {
+              if (PROTECTED_PAGES.has(page)) res.setHeader("X-Frame-Options", "DENY");
+              req.url = `/${page}${(req.url ?? "").slice(pathname.length)}`;
             }
-          });
-        });
+            next();
+          })
+          .catch(next);
       });
-
-      // Serve the control panel at the clean URL the spec asks for: /control
-      server.middlewares.use((req, _res, next) => {
-        if (req.url === "/control" || req.url?.startsWith("/control?")) {
-          req.url = req.url.replace("/control", "/control.html");
-        }
-        next();
-      });
-    },
-    configurePreviewServer(server) {
-      server.middlewares.use((req, _res, next) => {
-        if (req.url === "/control" || req.url?.startsWith("/control?")) {
-          req.url = req.url.replace("/control", "/control.html");
-        }
-        next();
+      const provider = app.provider;
+      server.httpServer?.once("listening", () => {
+        setTimeout(() => {
+          console.log(`  Jokko : paiements ${provider.name}${provider.livemode ? " (RÉEL)" : " (mode test)"} · tableau de bord → /dashboard\n`);
+        }, 50);
       });
     },
   };
 }
 
 export default defineConfig({
-  plugins: [overlayBridgePlugin()],
+  plugins: [jokkoPlugin()],
   resolve: {
     alias: {
-      "@": resolve(import.meta.dirname, "src"),
-      "@config": resolve(import.meta.dirname, "config"),
+      "@demo-install": resolve(root, "src/demo/noop.ts"),
+      "@": resolve(root, "src"),
+      "@config": resolve(root, "config"),
     },
   },
   build: {
     rollupOptions: {
       input: {
-        main: resolve(import.meta.dirname, "index.html"),
-        control: resolve(import.meta.dirname, "control.html"),
+        main: resolve(root, "index.html"),
+        control: resolve(root, "control.html"),
+        dashboard: resolve(root, "dashboard.html"),
+        support: resolve(root, "support.html"),
+        paySim: resolve(root, "pay-sim.html"),
+        admin: resolve(root, "admin.html"),
       },
     },
   },
   server: {
-    host: true,
+    // Local only by default: the dev server holds accounts and payment state.
+    // Set VITE_HOST=0.0.0.0 to test from a phone on the same Wi-Fi.
+    host: process.env.VITE_HOST || "localhost",
     port: 5173,
   },
 });

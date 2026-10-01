@@ -16,13 +16,16 @@ export interface Goal {
 
 export interface StreamerConfig {
   pseudo: string;
+  /** Community name used in alerts ("Bienvenue dans la …"). Per streamer in Jokko hosted mode. */
+  communityName: string;
   tagline: string;
   game: string;
   socials: { twitch: string; tiktok: string; youtube: string; kick: string };
   theme: ThemeName;
   performanceProfile: PerformanceProfile;
   reducedMotion: boolean;
-  goals: { followers: Goal; likes: Goal; gifts: Goal };
+  /** donations = cumulative Jokko mobile-money donations, in F CFA. */
+  goals: { followers: Goal; likes: Goal; gifts: Goal; donations: Goal };
   webcam: { mode: WebcamMode; floatShape: WebcamShape; visible: boolean };
   energyTeranga: { current: number; max: number };
   bossFight: {
@@ -36,6 +39,8 @@ export interface StreamerConfig {
   score: { team: number; opponent: number; roundsWon: number; roundsTotal: number };
   ranking: { position: number; of: number };
   lastSupporter: { name: string; type: string };
+  /** Jokko support page. Filled automatically in hosted mode; feeds the supportQr widget. */
+  support: { url: string };
   easterEggs: { enabled: boolean; dakarMode: boolean; chatCommand: string; keyCombo: string };
   widgets: Record<string, { enabled: boolean; scenes: string[] }>;
   /** Per-widget placement/appearance — this is what makes widgets "déplaçable,
@@ -49,6 +54,7 @@ export type TerangaEventType =
   | "follow"
   | "sub"
   | "gift"
+  | "donation"
   | "like_goal"
   | "raid"
   | "host"
