@@ -9,7 +9,7 @@ Le dépôt contient :
 
 ## Démarrage rapide (moins de 15 minutes)
 
-Prérequis : [Node.js 20.12 ou plus récent](https://nodejs.org).
+Prérequis : [Node.js 20.12 ou plus récent](https://nodejs.org). Guide pas à pas pour débuter : [docs/GUIDE_LOCAL.md](docs/GUIDE_LOCAL.md).
 
 ```bash
 npm install
@@ -77,6 +77,7 @@ public/assets/             emblème, mascotte (SVG), logo Jokko
 
 ## Documentation
 
+- [**Travailler en local : installer, modifier, renvoyer ses changements**](docs/GUIDE_LOCAL.md)
 - [Architecture Jokko](docs/JOKKO_ARCHITECTURE.md) : composants, parcours d'un paiement, données, sécurité, correspondance avec le cahier des charges
 - [Paiements : PayDunya, CinetPay, retraits](docs/JOKKO_PAIEMENTS.md)
 - [Mettre en ligne (Render, Railway, Docker, VPS)](docs/JOKKO_DEPLOIEMENT.md)
