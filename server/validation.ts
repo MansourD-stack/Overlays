@@ -1,4 +1,4 @@
-import { HttpError } from "./util";
+import { HttpError } from "./errors";
 import type { PaymentMethod } from "./store";
 
 export const PAYMENT_METHODS: PaymentMethod[] = ["wave", "orange-money", "free-money"];

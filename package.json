@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "start": "node dist-server/main.js",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:demo": "vite build --config vite.demo.config.ts"
   },
   "devDependencies": {
     "@types/ws": "^8.5.10",

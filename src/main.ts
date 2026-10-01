@@ -1,3 +1,4 @@
+import "@demo-install";
 import "@/styles/global.css";
 import "@/styles/shell.css";
 import "@/styles/widgets.css";

@@ -1,8 +1,10 @@
+import "@demo-install";
 import "../jokko.css";
 import "../dashboard/dashboard.css";
 import { api, ApiError } from "../api";
 import { STATUS_LABELS, dateTime, fcfa } from "../format";
 import { banner, button, el, field, input, toast } from "../ui";
+import { paths } from "../paths";
 
 /* Jokko operator console (/admin): process withdrawal requests, switch a
  * streamer's plan, see platform totals. Authenticated with JOKKO_ADMIN_TOKEN,
@@ -35,7 +37,7 @@ function header(right: Node[] = []) {
   return el("header", {
     class: "jk-topbar",
     children: [
-      el("a", { class: "jk-brand", attrs: { href: "/admin" }, children: [el("img", { attrs: { src: "/assets/jokko/jokko-mark.svg", alt: "" } }), el("span", { text: "Jokko · Admin" })] }),
+      el("a", { class: "jk-brand", attrs: { href: paths.admin() }, children: [el("img", { attrs: { src: paths.asset("assets/jokko/jokko-mark.svg"), alt: "" } }), el("span", { text: "Jokko · Admin" })] }),
       el("div", { class: "jk-row", children: right }),
     ],
   });
@@ -91,9 +93,13 @@ async function load() {
     return renderLogin(err instanceof ApiError ? err.message : "Erreur inattendue.");
   }
 
-  const process = (w: any, status: "paid" | "rejected") => async () => {
-    const note = prompt(status === "paid" ? `Référence du virement Wave de ${fcfa(w.amount)} vers ${w.phone} :` : "Motif du refus (visible par le streamer) :", "");
-    if (note === null) return;
+  const process = (w: any, status: "paid" | "rejected", noteInput: HTMLInputElement) => async () => {
+    const note = noteInput.value.trim();
+    if (!note) {
+      noteInput.focus();
+      toast(status === "paid" ? "Indique la référence du virement Wave." : "Indique le motif du refus : le streamer le verra.");
+      return;
+    }
     try {
       await adminApi("POST", `/api/admin/withdrawals/${encodeURIComponent(w.id)}`, { status, note });
       toast(status === "paid" ? "Retrait marqué versé" : "Retrait refusé, solde libéré");
@@ -105,8 +111,10 @@ async function load() {
 
   const wRows = (withdrawals.withdrawals as any[])
     .sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || a.createdAt - b.createdAt)
-    .map((w) =>
-      el("tr", {
+    .map((w) => {
+      const note = input({ type: "text", maxlength: "200", placeholder: "Réf. Wave ou motif", "aria-label": `Note pour le retrait de ${w.streamer}` });
+      note.classList.add("jk-input--sm");
+      return el("tr", {
         children: [
           td("Demandé", dateTime(w.createdAt)),
           td("Streamer", w.streamer ?? "?"),
@@ -116,12 +124,12 @@ async function load() {
           td(
             "Action",
             w.status === "pending"
-              ? el("div", { class: "jk-row", children: [button("Versé", "jk-btn--sm jk-btn--primary", process(w, "paid")), button("Refuser", "jk-btn--sm jk-btn--danger", process(w, "rejected"))] })
+              ? el("div", { class: "jk-row", children: [note, button("Versé", "jk-btn--sm jk-btn--primary", process(w, "paid", note)), button("Refuser", "jk-btn--sm jk-btn--danger", process(w, "rejected", note))] })
               : el("span", { class: "jk-muted jk-small", text: w.note || "—" })
           ),
         ],
-      })
-    );
+      });
+    });
 
   const sRows = (streamers.streamers as any[]).map((s) =>
     el("tr", {
@@ -167,7 +175,7 @@ async function load() {
           class: "jk-card",
           children: [
             el("h2", { class: "jk-card__title", text: "Retraits" }),
-            el("p", { class: "jk-muted jk-small", text: "Fais le virement depuis le compte Wave Business de Jokko, puis clique « Versé » avec la référence. « Refuser » rend le montant disponible au streamer." }),
+            el("p", { class: "jk-muted jk-small", text: "Fais le virement depuis le compte Wave Business de Jokko, note la référence puis clique « Versé ». Pour refuser, note le motif : le montant redevient disponible et le streamer voit le motif." }),
             table(["Demandé", "Streamer", "Montant", "Numéro Wave", "Statut", "Action"], wRows, "Aucune demande de retrait."),
           ],
         }),

@@ -55,3 +55,37 @@ export function progress(current: number, target: number): HTMLDivElement {
     children: [bar],
   });
 }
+
+/**
+ * Two-step button for irreversible actions: the first click arms it (label
+ * explains the consequence), the second within 4 s confirms. Replaces
+ * window.confirm(), which some embedded browsers silently refuse.
+ */
+export function confirmButton(label: string, confirmLabel: string, variant: string, onConfirm: () => void | Promise<void>): HTMLButtonElement {
+  const btn = el("button", { class: `jk-btn ${variant}`.trim(), text: label, attrs: { type: "button" } });
+  let armed = false;
+  let timer: number | undefined;
+  const disarm = () => {
+    armed = false;
+    btn.textContent = label;
+    btn.classList.remove("jk-btn--armed");
+  };
+  btn.addEventListener("click", async () => {
+    if (!armed) {
+      armed = true;
+      btn.textContent = confirmLabel;
+      btn.classList.add("jk-btn--armed");
+      timer = window.setTimeout(disarm, 4000);
+      return;
+    }
+    window.clearTimeout(timer);
+    btn.disabled = true;
+    try {
+      await onConfirm();
+    } finally {
+      btn.disabled = false;
+      disarm();
+    }
+  });
+  return btn;
+}

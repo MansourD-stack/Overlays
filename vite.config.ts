@@ -48,6 +48,7 @@ export default defineConfig({
   plugins: [jokkoPlugin()],
   resolve: {
     alias: {
+      "@demo-install": resolve(root, "src/demo/noop.ts"),
       "@": resolve(root, "src"),
       "@config": resolve(root, "config"),
     },

@@ -49,7 +49,12 @@ URLs courtes demandées par le cahier des charges : `/?scene=twitch-gameplay`, `
 | `npm run typecheck` | vérification TypeScript |
 | `npm run build` | build du front (`dist/`) et du serveur (`dist-server/`) |
 | `npm start` | serveur de production (port `PORT`, 8080 par défaut) |
+| `npm run build:demo` | démo sans serveur (`dist-demo/`) : toutes les pages tournent dans le navigateur, données locales, paiements simulés — pratique pour montrer Jokko sans rien installer |
 | `docker build -t jokko .` | image de production (voir [docs/JOKKO_DEPLOIEMENT.md](docs/JOKKO_DEPLOIEMENT.md)) |
+
+## Démo sans installation
+
+`npm run build:demo` produit un dossier statique (`dist-demo/`) que n'importe quel hébergeur de fichiers peut servir. Le serveur y est remplacé par une imitation dans le navigateur (`src/demo/install.ts`) qui reprend les mêmes règles (validation, commission, rangs, retraits) ; les pages ouvertes dans plusieurs onglets restent synchronisées. Compte de démo : `demo@jokko.sn` / `demo1234`, jeton admin `demo-admin`. Rien n'est encaissé, rien n'est envoyé.
 
 ## Structure
 
@@ -63,6 +68,7 @@ server/                    Serveur Jokko (Node, sans framework)
   auth.ts, validation.ts, ranks.ts
   test/                    tests Vitest
 src/jokko/                 tableau de bord, page de soutien, console admin, simulateur (TypeScript + CSS)
+src/demo/                  imitation du serveur pour la démo statique (build:demo uniquement)
 src/                       overlays : scenes/, widgets/, alerts/, themes/, config/, control/
 config/streamer.json       personnalisation du mode local (pseudo, objectifs, thème, webcam…)
 public/assets/             emblème, mascotte (SVG), logo Jokko

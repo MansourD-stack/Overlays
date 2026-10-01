@@ -1,14 +1,16 @@
+import "@demo-install";
 import "../jokko.css";
 import { api, ApiError } from "../api";
 import { fcfa } from "../format";
 import { banner, button, el } from "../ui";
+import { paths } from "../paths";
 
 /* Test-mode checkout (/pay/sim/<ref>). Stands in for the aggregator's page
  * while no PayDunya keys are configured: approving sends a signed
  * notification through the real webhook pipeline. Clearly labelled as a test. */
 
 const root = document.getElementById("jokko-app")!;
-const ref = decodeURIComponent(location.pathname.split("/")[3] ?? "");
+const ref = paths.currentSimRef();
 
 async function decide(outcome: "completed" | "failed" | "cancelled") {
   const r = await api<{ returnUrl: string }>("POST", `/api/sim/payments/${encodeURIComponent(ref)}/confirm`, { outcome });

@@ -18,15 +18,7 @@ export function safeEqual(a: string, b: string): boolean {
   return ba.length === bb.length && timingSafeEqual(ba, bb);
 }
 
-export class HttpError extends Error {
-  constructor(
-    readonly status: number,
-    message: string,
-    readonly code = "error"
-  ) {
-    super(message);
-  }
-}
+export { HttpError } from "./errors";
 
 const UNSAFE_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 

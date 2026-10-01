@@ -1,8 +1,10 @@
+import "@demo-install";
 import "../jokko.css";
 import "./dashboard.css";
 import { api, ApiError } from "../api";
 import { STATUS_LABELS, copyText, dateTime, fcfa } from "../format";
-import { banner, button, el, field, input, progress, toast } from "../ui";
+import { banner, button, confirmButton, el, field, input, progress, toast } from "../ui";
+import { IS_DEMO, paths } from "../paths";
 import { qrElement, qrSvgMarkup } from "@/components/QrCode";
 
 /* Streamer dashboard: sign-up/login, onboarding in 3 steps (overlay → test
@@ -24,7 +26,7 @@ function header(right: Node[] = []) {
   return el("header", {
     class: "jk-topbar",
     children: [
-      el("a", { class: "jk-brand", attrs: { href: "/dashboard" }, children: [el("img", { attrs: { src: "/assets/jokko/jokko-mark.svg", alt: "" } }), el("span", { text: "Jokko" })] }),
+      el("a", { class: "jk-brand", attrs: { href: paths.dashboard() }, children: [el("img", { attrs: { src: paths.asset("assets/jokko/jokko-mark.svg"), alt: "" } }), el("span", { text: "Jokko" })] }),
       el("div", { class: "jk-row", children: right }),
     ],
   });
@@ -55,7 +57,7 @@ function renderAuth(mode: "signup" | "login" = "signup") {
   const slug = input({ type: "text", maxlength: "30", placeholder: "awa-gaming", autocapitalize: "off", spellcheck: "false" });
   const preview = el("small", { class: "jk-muted" });
   let slugTouched = false;
-  const updatePreview = () => (preview.textContent = `Ton lien de soutien : ${location.host}/s/${slug.value || "…"}`);
+  const updatePreview = () => (preview.textContent = `Ton lien de soutien : ${paths.supportPreview(slug.value || "…")}`);
   name.addEventListener("input", () => {
     if (!slugTouched) slug.value = slugify(name.value);
     updatePreview();
@@ -169,7 +171,7 @@ function renderReset(token: string) {
     submit.disabled = true;
     try {
       await api("POST", "/api/auth/reset", { token, password: password.value });
-      history.replaceState(null, "", "/dashboard");
+      history.replaceState(null, "", paths.dashboard());
       toast("Mot de passe modifié");
       await loadDashboard();
     } catch (err) {
@@ -391,9 +393,8 @@ function overlayCard(d: Dashboard, reload: () => void) {
             await api("POST", "/api/overlay/test-alert", {});
             toast("Alerte envoyée");
           }),
-          el("a", { class: "jk-btn jk-btn--sm", text: "Panneau de contrôle ↗", attrs: { href: "/control", target: "_blank", rel: "noopener" } }),
-          button("Régénérer la clé", "jk-btn--sm jk-btn--danger", async () => {
-            if (!confirm("Les anciens liens d'overlay cesseront de fonctionner. Continuer ?")) return;
+          el("a", { class: "jk-btn jk-btn--sm", text: "Panneau de contrôle ↗", attrs: { href: paths.control(), target: "_blank", rel: "noopener" } }),
+          confirmButton("Régénérer la clé", "Confirmer : les anciens liens s'arrêtent", "jk-btn--sm jk-btn--danger", async () => {
             await api("POST", "/api/overlay/rotate-key", {});
             toast("Nouvelle clé générée");
             reload();
@@ -492,7 +493,7 @@ function supportCard(d: Dashboard) {
             class: "jk-stack jk-small",
             children: [
               el("p", { class: "jk-muted", text: "Tes viewers le scannent avec leur téléphone. Il s'affiche aussi sur l'overlay (widget « QR code de soutien ») dans les scènes Starting Soon, Just Chatting, BRB et Fin de live." }),
-              button("Télécharger le QR (SVG)", "jk-btn--sm", () => download(`jokko-${d.streamer.slug}-qr.svg`, qrSvgMarkup(d.supportUrl, { margin: 4 }), "image/svg+xml")),
+              IS_DEMO ? null : button("Télécharger le QR (SVG)", "jk-btn--sm", () => download(`jokko-${d.streamer.slug}-qr.svg`, qrSvgMarkup(d.supportUrl, { margin: 4 }), "image/svg+xml")),
             ],
           }),
         ],
@@ -520,8 +521,7 @@ function integrationsCard(d: Dashboard, reload: () => void) {
           el("p", { class: "jk-muted", text: `Types acceptés : ${d.hooks.types.join(", ")}. Détails dans docs/JOKKO_INTEGRATIONS.md.` }),
         ],
       }),
-      button("Régénérer l'URL", "jk-btn--sm jk-btn--danger", async () => {
-        if (!confirm("L'ancienne URL cessera de fonctionner dans tes outils. Continuer ?")) return;
+      confirmButton("Régénérer l'URL", "Confirmer : l'ancienne URL s'arrête", "jk-btn--sm jk-btn--danger", async () => {
         await api("POST", "/api/hooks/rotate", {});
         toast("Nouvelle URL générée");
         reload();
@@ -575,7 +575,7 @@ function renderDashboard(d: Dashboard) {
             el("div", {
               class: "jk-stack",
               children: [
-                el("section", { class: "jk-card", children: [el("h2", { class: "jk-card__title", children: [el("span", { text: "Historique des paiements" }), el("a", { class: "jk-btn jk-btn--sm", text: "Exporter (CSV)", attrs: { href: "/api/payments.csv", download: "" } })] }), paymentsTable(d)] }),
+                el("section", { class: "jk-card", children: [el("h2", { class: "jk-card__title", children: [el("span", { text: "Historique des paiements" }), IS_DEMO ? null : el("a", { class: "jk-btn jk-btn--sm", text: "Exporter (CSV)", attrs: { href: "/api/payments.csv", download: "" } })] }), paymentsTable(d)] }),
                 settingsCard(d, reload),
               ],
             }),

@@ -1,3 +1,4 @@
+import "@demo-install";
 import "@/styles/global.css";
 import "@/styles/control.css";
 import { applyTheme } from "@/themes";

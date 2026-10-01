@@ -1,9 +1,11 @@
+import "@demo-install";
 import "../jokko.css";
 import "./support.css";
 import { applyTheme, isThemeName } from "@/themes";
 import { api, ApiError } from "../api";
 import { fcfa, initials } from "../format";
 import { banner, el, progress } from "../ui";
+import { paths } from "../paths";
 
 /* Fan support page (/s/<slug>): pick an amount + Wave / Orange Money / Free
  * Money, pay on the provider's page, come back here and see the confirmation
@@ -28,7 +30,7 @@ interface PublicStreamer {
 }
 
 const root = document.getElementById("jokko-app")!;
-const slug = decodeURIComponent(location.pathname.split("/")[2] ?? "");
+const slug = paths.currentSlug();
 const params = new URLSearchParams(location.search);
 
 function footer() {
@@ -36,7 +38,7 @@ function footer() {
     class: "jk-support__footer",
     children: [
       el("span", { text: "Paiement sécurisé via un agrégateur agréé · " }),
-      el("a", { attrs: { href: "/dashboard" }, children: [el("img", { attrs: { src: "/assets/jokko/jokko-mark.svg", alt: "" } }), el("span", { text: "Propulsé par Jokko" })] }),
+      el("a", { attrs: { href: paths.dashboard() }, children: [el("img", { attrs: { src: paths.asset("assets/jokko/jokko-mark.svg"), alt: "" } }), el("span", { text: "Propulsé par Jokko" })] }),
     ],
   });
 }
@@ -171,7 +173,7 @@ async function renderStatus(s: PublicStreamer, ref: string) {
   root.replaceChildren(el("main", { class: "jk-support", children: [hero(s), box, footer()] }));
 
   const again = () => {
-    const a = el("a", { class: "jk-btn jk-btn--block", text: "Faire un autre soutien", attrs: { href: `/s/${encodeURIComponent(s.slug)}` } });
+    const a = el("a", { class: "jk-btn jk-btn--block", text: "Faire un autre soutien", attrs: { href: paths.support(s.slug) } });
     return a;
   };
 
