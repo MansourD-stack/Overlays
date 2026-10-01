@@ -4,6 +4,16 @@ import type { JokkoConfig } from "../config";
 import { createJokkoApp, type JokkoApp } from "../app";
 import { Store } from "../store";
 import type { PaymentProvider } from "../payments/provider";
+import type { Mail, Mailer } from "../mailer";
+
+/** Captures outgoing e-mails instead of sending them. */
+export class MemoryMailer implements Mailer {
+  readonly name = "memory";
+  sent: Mail[] = [];
+  async send(mail: Mail) {
+    this.sent.push(mail);
+  }
+}
 
 export function testConfig(overrides: Partial<JokkoConfig> = {}): JokkoConfig {
   return {
@@ -11,6 +21,7 @@ export function testConfig(overrides: Partial<JokkoConfig> = {}): JokkoConfig {
     publicUrl: null,
     provider: "simulated",
     paydunya: null,
+    cinetpay: null,
     livemode: false,
     secret: "test-secret-0123456789abcdef",
     adminToken: "admin-token-0123456789",
@@ -20,12 +31,14 @@ export function testConfig(overrides: Partial<JokkoConfig> = {}): JokkoConfig {
     minWithdrawal: 1_000,
     allowLocalBridge: true,
     trustProxy: false,
+    mail: null,
     ...overrides,
   };
 }
 
 export async function startServer(opts: { provider?: PaymentProvider; cfg?: Partial<JokkoConfig> } = {}) {
-  const app: JokkoApp = createJokkoApp(testConfig(opts.cfg), { store: new Store(null), provider: opts.provider });
+  const mailer = new MemoryMailer();
+  const app: JokkoApp = createJokkoApp(testConfig(opts.cfg), { store: new Store(null), provider: opts.provider, mailer });
   const server: Server = createServer((req, res) => {
     void app.handle(req, res).then((handled) => {
       if (!handled) res.writeHead(404).end();
@@ -49,8 +62,10 @@ export async function startServer(opts: { provider?: PaymentProvider; cfg?: Part
   return {
     app,
     base,
+    mailer,
     api,
     setCookie: (c: string) => (cookie = c),
+    getCookie: () => cookie,
     close: () =>
       new Promise<void>((r) => {
         app.close();

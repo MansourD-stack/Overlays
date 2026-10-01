@@ -68,3 +68,23 @@ describe("parseForm (IPN PayDunya)", () => {
     expect(({} as any).x).toBeUndefined();
   });
 });
+
+describe("sauvegardes", () => {
+  it("copie les données et ne garde que les plus récentes", async () => {
+    const { mkdtempSync, readdirSync, readFileSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const { Store } = await import("../store");
+    const dir = mkdtempSync(join(tmpdir(), "jokko-"));
+    const store = new Store(dir);
+    store.data.fans.push({ key: "test:x", total: 1, donations: 1, streamerIds: [], lastName: "A", createdAt: 0 });
+    for (let i = 0; i < 4; i++) {
+      store.backup(2);
+      await new Promise((r) => setTimeout(r, 5));
+    }
+    const files = readdirSync(join(dir, "backups"));
+    expect(files).toHaveLength(2);
+    expect(JSON.parse(readFileSync(join(dir, "backups", files[1]), "utf8")).fans).toHaveLength(1);
+    expect(new Store(dir).data.fans[0].key).toBe("test:x");
+  });
+});

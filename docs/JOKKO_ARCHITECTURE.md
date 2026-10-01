@@ -26,9 +26,9 @@ Jokko est la plateforme construite autour du système d'overlays de ce dépôt :
 |---|---|---|
 | ① | Page de soutien fan (mobile, thème du streamer) | `support.html`, `src/jokko/support/` |
 | ② | Serveur HTTP/API (Node, sans framework) | `server/app.ts`, `server/http.ts` |
-| ③ | Agrégateurs de paiement (interface commune) | `server/payments/` |
+| ③ | Agrégateurs de paiement : PayDunya, CinetPay (secours), simulé | `server/payments/` |
 | ④ | Stockage persistant (JSON atomique, remplaçable) | `server/store.ts` |
-| ⑤ | Tableau de bord streamer | `dashboard.html`, `src/jokko/dashboard/` |
+| ⑤ | Tableau de bord streamer + console admin | `dashboard.html`, `src/jokko/dashboard/`, `admin.html`, `src/jokko/admin/` |
 | ⑥ | Relais WebSocket par canal | `server/realtime.ts` |
 | ⑦ | Overlay + panneau de contrôle (existants) | `src/`, `index.html`, `control.html` |
 
@@ -60,11 +60,12 @@ Un fan qui renseigne son numéro est identifié par un **HMAC** du numéro (clé
 |---|---|
 | `streamers` | compte (e-mail, hash scrypt), slug, offre `free`/`pro`, clé d'overlay, thème, page de soutien, objectif, modération, numéro Wave de retrait |
 | `sessions` | SHA-256 du jeton de session (le jeton lui-même n'est que dans le cookie HttpOnly) |
+| `resets` | SHA-256 des liens « mot de passe oublié » (30 min, usage unique) |
 | `payments` | montant, moyen, commission, net, statut, fournisseur, `livemode`, nom/message du fan, clé fan |
 | `withdrawals` | demandes de retrait (montant, numéro Wave, statut `pending`/`paid`/`rejected`) |
 | `fans` | total cumulé, nombre de dons, streamers soutenus |
 
-Le stockage est un fichier JSON écrit de façon atomique (fichier temporaire + renommage). C'est volontaire pour un MVP installable en minutes ; tout accès passe par `Store`, donc migrer vers PostgreSQL/SQLite ne touche qu'un fichier. **Limite : un seul processus serveur.**
+Le stockage est un fichier JSON écrit de façon atomique (fichier temporaire + renommage), sauvegardé automatiquement dans `data/backups/` au démarrage puis chaque jour (14 copies gardées). C'est volontaire pour un MVP installable en minutes ; tout accès passe par `Store`, donc migrer vers PostgreSQL/SQLite ne touche qu'un fichier. **Limite : un seul processus serveur.**
 
 ## Argent test vs argent réel
 
@@ -95,7 +96,10 @@ Le stockage est un fichier JSON écrit de façon atomique (fichier temporaire + 
 | PUT | `/api/payout` | streamer connecté (numéro Wave) |
 | POST | `/api/withdrawals` | streamer connecté |
 | POST | `/api/overlay/rotate-key` · `/api/overlay/test-alert` | streamer connecté |
-| GET/POST | `/api/admin/withdrawals[/:id]`, `/api/admin/streamers/:slug/plan` | `Authorization: Bearer $JOKKO_ADMIN_TOKEN` |
+| GET | `/api/payments.csv` | streamer connecté (export Excel) |
+| POST | `/api/auth/forgot` · `/api/auth/reset` | — (réponse identique que le compte existe ou non) |
+| GET/POST | `/api/hooks/:hookKey` (+ `POST /api/hooks/rotate`) | clé d'intégration (Streamer.bot, TikFinity…) : animations seulement, jamais de dons |
+| GET/POST | `/api/admin/stats`, `/api/admin/streamers`, `/api/admin/withdrawals[/:id]`, `/api/admin/streamers/:slug/plan` | `Authorization: Bearer $JOKKO_ADMIN_TOKEN` (console `/admin`) |
 | GET/POST | `/api/sim/payments/:ref[/confirm]` | mode test uniquement |
 
 ## Correspondance avec le cahier des charges
@@ -113,10 +117,19 @@ Le stockage est un fichier JSON écrit de façon atomique (fichier temporaire + 
 | Offres Gratuit (1 thème, commission plus élevée) / Pro | `plan`, `JOKKO_COMMISSION_FREE/PRO`, thèmes filtrés |
 | V2 déjà amorcée | 5 thèmes, scènes H/V, mascotte, Énergie Teranga, Boss Fight, Radar (existants) ; Rang Teranga inter-streamers |
 
+## Ajouts après le MVP
+
+- **QR code** du lien de soutien : téléchargeable (SVG) dans le tableau de bord et affiché sur l'overlay (widget `supportQr`, scènes Starting Soon, Just Chatting, BRB, Fin de live).
+- **Webhook d'intégration** pour Streamer.bot, TikFinity, etc. : [JOKKO_INTEGRATIONS.md](JOKKO_INTEGRATIONS.md).
+- **Mot de passe oublié** par e-mail (Resend, ou affiché dans le terminal en local).
+- **Console `/admin`** : retraits, offres, statistiques.
+- **CinetPay** comme agrégateur de secours, **export CSV**, **sauvegardes automatiques**, **Dockerfile** ([JOKKO_DEPLOIEMENT.md](JOKKO_DEPLOIEMENT.md)).
+
 ## Ce qui n'est pas (encore) fait
 
-- **Versement automatique des retraits** : les demandes sont enregistrées et traitées par un administrateur (virement Wave manuel puis `POST /api/admin/withdrawals/:id`). L'API de déboursement de l'agrégateur est l'étape suivante, une fois le montage juridique validé.
+- **Versement automatique des retraits** : les demandes sont traitées dans la console `/admin` (virement Wave manuel). L'API de déboursement de l'agrégateur est l'étape suivante, une fois le montage juridique validé.
 - **« Connexion à un compte Wave »** = enregistrement du numéro Wave de retrait ; Wave n'offre pas de connexion OAuth publique aux comptes particuliers.
 - **Paiement direct sans redirection (SoftPay)** : le MVP utilise la page de paiement hébergée par PayDunya, restreinte au moyen choisi par le fan.
-- Organisation multi-profils, reporting consolidé, second agrégateur de secours (l'interface `PaymentProvider` est prête pour CinetPay / Hub2).
-- Base de données multi-processus, e-mails de réinitialisation de mot de passe.
+- Offre Organisation (plusieurs streamers sous une marque, reporting consolidé) : à concevoir avec les premières agences intéressées.
+- Base de données multi-processus (PostgreSQL) : utile au-delà de quelques centaines de streamers actifs ; seul `server/store.ts` change.
+- Connexion native Twitch EventSub (aujourd'hui via Streamer.bot / TikFinity).

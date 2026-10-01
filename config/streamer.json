@@ -65,6 +65,9 @@
     "name": "",
     "type": "follow"
   },
+  "support": {
+    "url": ""
+  },
   "easterEggs": {
     "enabled": true,
     "dakarMode": true,
@@ -90,7 +93,8 @@
     "terangaRadar": "top-right",
     "energyTeranga": "bottom-left",
     "bossFight": "top-center",
-    "goalDonations": "bottom-right"
+    "goalDonations": "bottom-right",
+    "supportQr": "bottom-right"
   },
   "widgetScale": {},
   "widgetColors": {},
@@ -230,6 +234,20 @@
         "tiktok-gameplay-webcam",
         "tiktok-justchatting",
         "tiktok-facecam"
+      ]
+    },
+    "supportQr": {
+      "enabled": true,
+      "scenes": [
+        "twitch-starting-soon",
+        "twitch-justchatting",
+        "twitch-brb",
+        "twitch-ending",
+        "twitch-community",
+        "tiktok-justchatting",
+        "tiktok-starting-soon",
+        "tiktok-pause",
+        "tiktok-ending"
       ]
     }
   }

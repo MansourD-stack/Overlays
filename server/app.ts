@@ -7,9 +7,12 @@ import { SESSION_COOKIE, createSession, destroySession, hashPassword, parseCooki
 import { PaymentService } from "./payments/service";
 import { SimulatedProvider } from "./payments/simulated";
 import { PayDunyaProvider } from "./payments/paydunya";
+import { CinetPayProvider } from "./payments/cinetpay";
 import type { PaymentProvider } from "./payments/provider";
+import { ConsoleMailer, ResendMailer, type Mailer } from "./mailer";
 import { RANKS, nextRank, rankFor } from "./ranks";
-import { HttpError, randomId, safeEqual } from "./util";
+import { HOOK_TYPES, hookMessages, toCsv } from "./hooks";
+import { HttpError, deepMerge, randomId, safeEqual, sha256 } from "./util";
 import {
   METHOD_LABELS,
   PAYMENT_METHODS,
@@ -31,40 +34,60 @@ const FREE_THEMES = ["dakar-neon"];
 export function pageFor(pathname: string): string | null {
   if (pathname === "/control" || pathname === "/control/") return "control.html";
   if (pathname === "/dashboard" || pathname === "/dashboard/") return "dashboard.html";
+  if (pathname === "/admin" || pathname === "/admin/") return "admin.html";
   if (/^\/s\/[^/]+\/?$/.test(pathname)) return "support.html";
   if (/^\/pay\/sim\/[^/]+\/?$/.test(pathname)) return "pay-sim.html";
   return null;
 }
 
 /** Pages that handle money or accounts must never be framed by another site. */
-export const PROTECTED_PAGES = new Set(["dashboard.html", "support.html", "pay-sim.html"]);
+export const PROTECTED_PAGES = new Set(["dashboard.html", "support.html", "pay-sim.html", "admin.html"]);
 
 export interface JokkoApp {
   store: Store;
   hub: RealtimeHub;
   payments: PaymentService;
   provider: PaymentProvider;
+  mailer: Mailer;
   /** Handles /api/*; resolves true when it responded. */
   handle(req: IncomingMessage, res: ServerResponse): Promise<boolean>;
   close(): void;
 }
 
 export function createProvider(cfg: JokkoConfig): PaymentProvider {
-  return cfg.provider === "paydunya" && cfg.paydunya ? new PayDunyaProvider(cfg.paydunya) : new SimulatedProvider(cfg.secret);
+  if (cfg.provider === "paydunya" && cfg.paydunya) return new PayDunyaProvider(cfg.paydunya);
+  if (cfg.provider === "cinetpay" && cfg.cinetpay) return new CinetPayProvider(cfg.cinetpay);
+  return new SimulatedProvider(cfg.secret);
 }
 
-export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider?: PaymentProvider } = {}): JokkoApp {
+export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider?: PaymentProvider; mailer?: Mailer } = {}): JokkoApp {
   const store = opts.store ?? new Store(cfg.dataDir);
+  const mailer = opts.mailer ?? (cfg.mail ? new ResendMailer(cfg.mail.resendApiKey, cfg.mail.from) : new ConsoleMailer());
   const hub = new RealtimeHub(store, cfg.allowLocalBridge);
   const provider = opts.provider ?? createProvider(cfg);
   const payments = new PaymentService(store, provider, cfg, hub);
   const router = new Router(cfg.trustProxy);
+
+  // Automatic backups: shortly after start-up, then daily (no-op for in-memory stores).
+  const runBackup = () => {
+    try {
+      store.backup();
+    } catch (err) {
+      console.error("[jokko] sauvegarde impossible :", err);
+    }
+  };
+  const firstBackup = setTimeout(runBackup, 5_000);
+  const dailyBackup = setInterval(runBackup, 24 * 3600_000);
+  firstBackup.unref();
+  dailyBackup.unref();
 
   const limits = {
     pay: new RateLimiter(10, 60_000),
     auth: new RateLimiter(10, 5 * 60_000),
     signup: new RateLimiter(5, 10 * 60_000),
     status: new RateLimiter(120, 60_000),
+    hooks: new RateLimiter(60, 10_000),
+    forgot: new RateLimiter(5, 15 * 60_000),
   };
 
   const baseUrl = (req: IncomingMessage) => cfg.publicUrl ?? `http://${req.headers.host ?? "localhost"}`;
@@ -119,11 +142,66 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
     };
   }
 
-  function overlayPatch(streamer: Streamer) {
+  /** Fields the server owns: never taken from /control, always win over saved overlay settings. */
+  const SERVER_OWNED = ["pseudo", "communityName", "support", "lastSupporter", "theme"];
+  const MAX_OVERLAY_CONFIG = 32 * 1024;
+
+  function withoutServerOwned(patch: Record<string, unknown>): Record<string, unknown> {
+    const out = { ...patch };
+    for (const k of SERVER_OWNED) delete out[k];
+    if (out.goals && typeof out.goals === "object") {
+      const goals = { ...(out.goals as Record<string, unknown>) };
+      delete goals.donations;
+      out.goals = goals;
+    }
+    return out;
+  }
+
+  function saveOverlayConfig(s: Streamer, patch: Record<string, unknown>) {
+    const next = deepMerge(s.overlayConfig ?? {}, withoutServerOwned(patch)) as Record<string, unknown>;
+    if (JSON.stringify(next).length > MAX_OVERLAY_CONFIG) return;
+    s.overlayConfig = next;
+    store.save();
+  }
+
+  // Messages from the streamer's /control panel: enforce plan limits, persist settings.
+  hub.filter = (channel, message) => {
+    const s = store.streamerById(channel);
+    if (!s) return null;
+    switch (message.kind) {
+      case "theme-change":
+        if (!themesFor(s).includes(String(message.theme))) return null;
+        s.theme = String(message.theme);
+        store.save();
+        return message;
+      case "config-patch": {
+        const patch = (message.patch ?? {}) as Record<string, unknown>;
+        if (typeof patch !== "object") return null;
+        saveOverlayConfig(s, patch);
+        // Theme only through theme-change (plan-checked); identity and donations stay server-side.
+        return { kind: "config-patch", patch: withoutServerOwned(patch) };
+      }
+      case "performance-change":
+        saveOverlayConfig(s, { performanceProfile: message.profile, reducedMotion: message.reducedMotion });
+        return message;
+      case "widget-toggle":
+        if (typeof message.widget === "string") saveOverlayConfig(s, { widgets: { [message.widget]: { enabled: message.enabled === true } } });
+        return message;
+      default:
+        return message;
+    }
+  };
+
+  function overlayPatch(req: IncomingMessage, streamer: Streamer) {
     return {
+      ...(streamer.overlayConfig ?? {}),
       pseudo: streamer.displayName,
+      support: { url: `${baseUrl(req)}/s/${streamer.slug}` },
       communityName: streamer.communityName,
-      goals: { donations: { current: payments.goalProgress(streamer), target: streamer.goal.target, label: streamer.goal.label } },
+      goals: {
+        ...((streamer.overlayConfig?.goals as Record<string, unknown> | undefined) ?? {}),
+        donations: { current: payments.goalProgress(streamer), target: streamer.goal.target, label: streamer.goal.label },
+      },
     };
   }
 
@@ -210,6 +288,12 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
     });
   });
 
+  // Some aggregators probe the notification URL with a GET before using it.
+  router.add("GET", "/api/webhooks/:provider", ({ res, params }) => {
+    if (params.provider !== provider.name) throw new HttpError(404, "Fournisseur inconnu.", "not_found");
+    sendJson(res, 200, { ok: true });
+  });
+
   router.add("POST", "/api/webhooks/:provider", async ({ req, res, params }) => {
     if (params.provider !== provider.name) throw new HttpError(404, "Fournisseur inconnu.", "not_found");
     const body = await readBody(req);
@@ -238,10 +322,10 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
   }
 
   // ───────────────────────── Overlay ─────────────────────────
-  router.add("GET", "/api/overlay/state", ({ res, url }) => {
+  router.add("GET", "/api/overlay/state", ({ req, res, url }) => {
     const s = store.streamerByOverlayKey(url.searchParams.get("key") ?? "");
     if (!s) throw new HttpError(404, "Clé d'overlay invalide.", "bad_key");
-    sendJson(res, 200, { theme: s.theme, patch: overlayPatch(s) });
+    sendJson(res, 200, { theme: s.theme, patch: overlayPatch(req, s) });
   });
 
   // ───────────────────────── Accounts ─────────────────────────
@@ -266,6 +350,7 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
       plan: "free",
       createdAt: now,
       overlayKey: randomId("ovk", 18),
+      hookKey: randomId("hk", 18),
       theme: "dakar-neon",
       communityName: `Team ${displayName}`,
       page: {
@@ -294,6 +379,51 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
     // Same scrypt cost whether or not the account exists: no e-mail enumeration by timing.
     const ok = s ? await verifyPassword(String(body.password ?? ""), s.passwordHash) : (await hashPassword("jokko-timing-pad"), false);
     if (!s || !ok) throw new HttpError(401, "E-mail ou mot de passe incorrect.", "bad_credentials");
+    const session = createSession(store, s.id);
+    sendJson(ctx.res, 200, { streamer: publicStreamer(s) }, {
+      "Set-Cookie": `${SESSION_COOKIE}=${session.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${session.maxAgeSec}${secureCookie()}`,
+    });
+  });
+
+  const RESET_TTL_MS = 30 * 60_000;
+
+  router.add("POST", "/api/auth/forgot", async (ctx) => {
+    limits.forgot.check(ctx.ip);
+    assertSameOrigin(ctx.req);
+    const body = (await readBody(ctx.req)) as Record<string, unknown>;
+    const s = store.streamerByEmail(String(body.email ?? "").trim().toLowerCase());
+    if (s) {
+      const token = randomId("rst", 24);
+      const now = Date.now();
+      store.data.resets = store.data.resets.filter((r) => r.expiresAt > now && r.streamerId !== s.id);
+      store.data.resets.push({ tokenHash: sha256(token), streamerId: s.id, expiresAt: now + RESET_TTL_MS });
+      store.save();
+      const link = `${baseUrl(ctx.req)}/dashboard?reset=${encodeURIComponent(token)}`;
+      // Not awaited: the response time must not reveal whether the account exists.
+      mailer
+        .send({
+          to: s.email,
+          subject: "Jokko — réinitialise ton mot de passe",
+          text: `Salut ${s.displayName},\n\nPour choisir un nouveau mot de passe, ouvre ce lien (valable 30 minutes) :\n${link}\n\nSi tu n'as rien demandé, ignore cet e-mail : ton mot de passe actuel reste valable.\n\n— Jokko`,
+        })
+        .catch((err) => console.error("[jokko] e-mail de réinitialisation non envoyé :", err));
+    }
+    sendJson(ctx.res, 200, { ok: true });
+  });
+
+  router.add("POST", "/api/auth/reset", async (ctx) => {
+    limits.auth.check(ctx.ip);
+    assertSameOrigin(ctx.req);
+    const body = (await readBody(ctx.req)) as Record<string, unknown>;
+    const password = validatePassword(body.password);
+    const hash = sha256(String(body.token ?? ""));
+    const reset = store.data.resets.find((r) => r.tokenHash === hash && r.expiresAt > Date.now());
+    const s = reset ? store.streamerById(reset.streamerId) : undefined;
+    if (!reset || !s) throw new HttpError(400, "Lien expiré ou déjà utilisé. Refais une demande.", "invalid_reset");
+    s.passwordHash = await hashPassword(password);
+    // A reset logs out every other device and burns every pending link.
+    store.data.sessions = store.data.sessions.filter((x) => x.streamerId !== s.id);
+    store.data.resets = store.data.resets.filter((x) => x.streamerId !== s.id);
     const session = createSession(store, s.id);
     sendJson(ctx.res, 200, { streamer: publicStreamer(s) }, {
       "Set-Cookie": `${SESSION_COOKIE}=${session.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${session.maxAgeSec}${secureCookie()}`,
@@ -338,6 +468,7 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
       payments: history,
       withdrawals,
       overlay: { key: s.overlayKey, urls: overlayUrls(ctx.req, s) },
+      hooks: { url: `${baseUrl(ctx.req)}/api/hooks/${s.hookKey}`, types: HOOK_TYPES },
       supportUrl: `${baseUrl(ctx.req)}/s/${s.slug}`,
       themes: THEMES.map((id) => ({ id, available: themesFor(s).includes(id) })),
       commissionRate: payments.commissionRate(s),
@@ -376,7 +507,7 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
       s.blockedWords = body.blockedWords.slice(0, 50).map((w: unknown) => cleanText(w, 30)).filter(Boolean);
     }
     store.save();
-    hub.publish(s.id, { kind: "config-patch", patch: overlayPatch(s) });
+    hub.publish(s.id, { kind: "config-patch", patch: overlayPatch(ctx.req, s) });
     sendJson(ctx.res, 200, { streamer: publicStreamer(s) });
   });
 
@@ -424,12 +555,95 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
     sendJson(ctx.res, 200, { ok: true });
   });
 
+  router.add("GET", "/api/payments.csv", (ctx) => {
+    const s = auth(ctx);
+    const rows = store.data.payments
+      .filter((p) => p.streamerId === s.id && p.livemode === provider.livemode && p.status !== "pending")
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((p) => [
+        new Date(p.createdAt).toISOString(),
+        p.ref,
+        p.fanName,
+        p.fanKey && store.fan(p.fanKey) ? rankFor(store.fan(p.fanKey)!.total).label : "",
+        METHOD_LABELS[p.method],
+        p.amount,
+        p.status === "completed" ? p.commission : 0,
+        p.status === "completed" ? p.net : 0,
+        p.status,
+        p.fanMessage,
+      ]);
+    ctx.res.writeHead(200, {
+      "Content-Type": "text/csv; charset=utf-8",
+      "Content-Disposition": `attachment; filename="jokko-${s.slug}-paiements${provider.livemode ? "" : "-test"}.csv"`,
+      "Cache-Control": "no-store",
+    });
+    ctx.res.end(toCsv(rows));
+  });
+
+  // ───────────────────────── Integrations (Streamer.bot, TikFinity…) ─────────────────────────
+  async function hook(ctx: Ctx) {
+    limits.hooks.check(ctx.params.key);
+    const s = store.streamerByHookKey(ctx.params.key);
+    if (!s) throw new HttpError(404, "Clé d'intégration invalide.", "bad_key");
+    const input =
+      ctx.req.method === "GET" ? Object.fromEntries(ctx.url.searchParams) : ((await readBody(ctx.req)) as Record<string, unknown>);
+    const messages = hookMessages(input, s.blockedWords);
+    for (const m of messages) hub.publish(s.id, m);
+    sendJson(ctx.res, 200, { ok: true, delivered: messages.length });
+  }
+  router.add("POST", "/api/hooks/rotate", (ctx) => {
+    const s = auth(ctx, true);
+    s.hookKey = randomId("hk", 18);
+    store.save();
+    sendJson(ctx.res, 200, { hooks: { url: `${baseUrl(ctx.req)}/api/hooks/${s.hookKey}` } });
+  });
+  router.add("POST", "/api/hooks/:key", hook);
+  router.add("GET", "/api/hooks/:key", hook);
+
   // ───────────────────────── Admin (withdrawal processing) ─────────────────────────
+  router.add("GET", "/api/admin/stats", (ctx) => {
+    admin(ctx);
+    const live = provider.livemode;
+    let volume = 0;
+    let commission = 0;
+    let count = 0;
+    for (const p of store.data.payments) {
+      if (p.livemode !== live || p.status !== "completed") continue;
+      volume += p.amount;
+      commission += p.commission;
+      count += 1;
+    }
+    const pending = store.data.withdrawals.filter((w) => w.livemode === live && w.status === "pending");
+    sendJson(ctx.res, 200, {
+      livemode: live,
+      provider: provider.name,
+      streamers: store.data.streamers.length,
+      pro: store.data.streamers.filter((s) => s.plan === "pro").length,
+      payments: count,
+      volume,
+      commission,
+      fans: store.data.fans.filter((f) => f.key.startsWith(live ? "live:" : "test:")).length,
+      pendingWithdrawals: { count: pending.length, amount: pending.reduce((n, w) => n + w.amount, 0) },
+    });
+  });
+
+  router.add("GET", "/api/admin/streamers", (ctx) => {
+    admin(ctx);
+    const list = store.data.streamers
+      .map((s) => {
+        const b = payments.balance(s);
+        return { id: s.id, slug: s.slug, displayName: s.displayName, email: s.email, plan: s.plan, createdAt: s.createdAt, received: b.received, available: b.available, payout: s.payout.phone };
+      })
+      .sort((a, b) => b.received - a.received);
+    sendJson(ctx.res, 200, { streamers: list });
+  });
+
   router.add("GET", "/api/admin/withdrawals", (ctx) => {
     admin(ctx);
     const status = ctx.url.searchParams.get("status");
     const list = store.data.withdrawals
-      .filter((w) => !status || w.status === status)
+      .filter((w) => w.livemode === provider.livemode && (!status || w.status === status))
+      .sort((a, b) => a.createdAt - b.createdAt)
       .map((w) => ({ ...w, streamer: store.streamerById(w.streamerId)?.slug ?? null }));
     sendJson(ctx.res, 200, { withdrawals: list });
   });
@@ -465,6 +679,7 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
     hub,
     payments,
     provider,
+    mailer,
     async handle(req, res) {
       if (!req.url?.startsWith("/api/")) return false;
       res.setHeader("X-Content-Type-Options", "nosniff");
@@ -473,6 +688,8 @@ export function createJokkoApp(cfg: JokkoConfig, opts: { store?: Store; provider
       return true;
     },
     close() {
+      clearTimeout(firstBackup);
+      clearInterval(dailyBackup);
       hub.close();
       store.flush();
     },

@@ -22,7 +22,12 @@ interface Client {
  * meet there. A leaked overlay URL lets someone watch the overlay, never
  * inject fake alerts.
  */
+/** Lets the app veto/rewrite a controller message before it is relayed (plan
+ *  limits) and persist it (hosted overlay settings). Return null to drop it. */
+export type ControllerFilter = (channel: string, message: Record<string, unknown>) => Record<string, unknown> | null;
+
 export class RealtimeHub {
+  filter: ControllerFilter | null = null;
   private wss = new WebSocketServer({ noServer: true, maxPayload: 64 * 1024 });
   private clients = new Set<Client>();
   private heartbeat: NodeJS.Timeout;
@@ -73,7 +78,19 @@ export class RealtimeHub {
       ws.on("error", () => ws.terminate());
       ws.on("message", (data) => {
         if (!client.canSend) return;
-        const text = data.toString();
+        let text = data.toString();
+        if (this.filter && client.channel !== LOCAL_CHANNEL) {
+          let parsed: Record<string, unknown>;
+          try {
+            parsed = JSON.parse(text);
+          } catch {
+            return;
+          }
+          if (!parsed || typeof parsed !== "object") return;
+          const next = this.filter(client.channel, parsed);
+          if (!next) return;
+          text = JSON.stringify(next);
+        }
         for (const other of this.clients) {
           if (other !== client && other.channel === client.channel && other.ws.readyState === other.ws.OPEN) other.ws.send(text);
         }

@@ -23,3 +23,8 @@ Utilisez cette liste avant un stream, ou après une personnalisation importante.
 - [ ] **Changement de thème** depuis les réglages (offre Pro) : overlay et page de soutien changent sans modifier le code.
 - [ ] **Aucun secret dans le dépôt** — `git ls-files | grep -E "\.env$|data/"` ne renvoie rien ; les clés PayDunya ne sont que dans `.env`.
 - [ ] **PayDunya sandbox** testé de bout en bout (webhook reçu via `JOKKO_PUBLIC_URL`) avant de passer en `live`.
+- [ ] **QR code** : visible dans le tableau de bord, téléchargeable, et affiché sur `?scene=starting-soon&key=…` ; il s'ouvre sur la page de soutien quand on le scanne avec un téléphone.
+- [ ] **Mot de passe oublié** : le lien arrive (ou s'affiche dans le terminal en local), fonctionne une seule fois et déconnecte les autres appareils.
+- [ ] **Console `/admin`** : un retrait demandé apparaît, « Versé » et « Refuser » mettent à jour le solde du streamer.
+- [ ] **Webhook d'intégration** : `curl "<url>?type=follow&username=Test"` déclenche l'alerte follow sur l'overlay ; `type=donation` est refusé.
+- [ ] **Sauvegardes** : `data/backups/` contient une copie peu après le démarrage du serveur.

@@ -86,3 +86,14 @@
 
 /* Last-event chips appear only once they have something to say. */
 .tg-last-event--empty { display: none !important; }
+
+/* Support QR (Jokko) — dark modules on a white card: scans reliably from a phone filming a screen. */
+.tg-support-qr { display: flex; align-items: center; gap: var(--space-3); }
+.tg-support-qr__code { width: 132px; height: 132px; flex-shrink: 0; padding: 6px; background: #fff; border-radius: var(--radius-cut-sm); }
+.tg-support-qr__code svg { width: 100%; height: 100%; display: block; }
+.tg-support-qr__text { display: flex; flex-direction: column; gap: 4px; max-width: 260px; }
+.tg-support-qr__title { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: 0.06em; color: var(--color-accent); }
+.tg-support-qr__methods { font-size: 14px; color: var(--color-text); }
+.tg-support-qr__url { font-size: 13px; color: var(--color-muted); overflow-wrap: anywhere; }
+.tg-stage[data-layout="vertical"] .tg-support-qr__code { width: 190px; height: 190px; }
+.tg-stage[data-layout="vertical"] .tg-support-qr__title { font-size: 24px; }

@@ -4,7 +4,7 @@
 
 Le dépôt contient :
 
-- **La plateforme Jokko (MVP v1)** : page de soutien fan, tableau de bord streamer (historique, solde, retraits Wave), paiements via PayDunya avec webhook, mode test complet sans compte externe, Rang Teranga inter-streamers.
+- **La plateforme Jokko (MVP v1)** : page de soutien fan, tableau de bord streamer (historique, export CSV, solde, retraits Wave, QR code), paiements via PayDunya (CinetPay en secours) avec webhook, mode test complet sans compte externe, Rang Teranga inter-streamers, console admin, mot de passe oublié, webhook d'intégration Twitch/TikTok.
 - **Le système d'overlays Afro-Future** (direction *Baobab Circuit*) : 23 scènes horizontales et verticales, 5 thèmes, 19 widgets, alertes en file d'attente, mascotte, panneau `/control`. Il reste utilisable seul, en local, par le streamer fondateur.
 
 ## Démarrage rapide (moins de 15 minutes)
@@ -35,6 +35,7 @@ Sans configuration, tout tourne en **mode test** (paiements simulés, aucun arge
 | `/s/<identifiant>` | fans | page de soutien mobile aux couleurs du streamer, confirmation et Rang Teranga |
 | `/?scene=…&layout=…&key=…` | OBS / TikTok LIVE Studio | overlay (Browser Source) |
 | `/control` | streamer | panneau de contrôle (scènes, thèmes, widgets, simulateur d'alertes) — n'apparaît jamais dans les scènes |
+| `/admin` | équipe Jokko | console : retraits à verser, offres Gratuit/Pro, statistiques (jeton `JOKKO_ADMIN_TOKEN`) |
 | `/pay/sim/<ref>` | tests | simulateur de paiement (mode test uniquement) |
 
 URLs courtes demandées par le cahier des charges : `/?scene=twitch-gameplay`, `/?scene=tiktok-gameplay`, `/?scene=starting-soon`, `/?scene=brb`, `/?layout=vertical` (le même alias choisit la scène horizontale ou verticale selon `layout`).
@@ -48,18 +49,20 @@ URLs courtes demandées par le cahier des charges : `/?scene=twitch-gameplay`, `
 | `npm run typecheck` | vérification TypeScript |
 | `npm run build` | build du front (`dist/`) et du serveur (`dist-server/`) |
 | `npm start` | serveur de production (port `PORT`, 8080 par défaut) |
+| `docker build -t jokko .` | image de production (voir [docs/JOKKO_DEPLOIEMENT.md](docs/JOKKO_DEPLOIEMENT.md)) |
 
 ## Structure
 
 ```
 server/                    Serveur Jokko (Node, sans framework)
   app.ts                   routes API, pages, offres, admin
-  payments/                agrégateurs (PayDunya, simulé) + cycle de vie des paiements
+  payments/                agrégateurs (PayDunya, CinetPay, simulé) + cycle de vie des paiements
+  hooks.ts, mailer.ts      webhook d'intégration + export CSV, e-mails
   realtime.ts              relais WebSocket, un canal par streamer
   store.ts                 stockage persistant (data/jokko.json)
   auth.ts, validation.ts, ranks.ts
   test/                    tests Vitest
-src/jokko/                 tableau de bord, page de soutien, simulateur (TypeScript + CSS)
+src/jokko/                 tableau de bord, page de soutien, console admin, simulateur (TypeScript + CSS)
 src/                       overlays : scenes/, widgets/, alerts/, themes/, config/, control/
 config/streamer.json       personnalisation du mode local (pseudo, objectifs, thème, webcam…)
 public/assets/             emblème, mascotte (SVG), logo Jokko
@@ -69,7 +72,9 @@ public/assets/             emblème, mascotte (SVG), logo Jokko
 ## Documentation
 
 - [Architecture Jokko](docs/JOKKO_ARCHITECTURE.md) : composants, parcours d'un paiement, données, sécurité, correspondance avec le cahier des charges
-- [Paiements, PayDunya et mise en production](docs/JOKKO_PAIEMENTS.md)
+- [Paiements : PayDunya, CinetPay, retraits](docs/JOKKO_PAIEMENTS.md)
+- [Mettre en ligne (Render, Railway, Docker, VPS)](docs/JOKKO_DEPLOIEMENT.md)
+- [Brancher Twitch / TikTok (Streamer.bot, TikFinity)](docs/JOKKO_INTEGRATIONS.md)
 - [Installation OBS](docs/OBS_SETUP.md) · [TikTok LIVE Studio](docs/TIKTOK_LIVE_STUDIO_SETUP.md)
 - [Personnalisation](docs/CUSTOMIZATION.md) · [Ajouter une scène ou une alerte](docs/ADDING_SCENES_AND_ALERTS.md)
 - [Architecture et directions visuelles des overlays](docs/ARCHITECTURE_AND_VISUAL_DIRECTIONS.md)

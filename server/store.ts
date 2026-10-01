@@ -1,6 +1,7 @@
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import type { Plan } from "./config";
+import { randomId } from "./util";
 
 export type PaymentMethod = "wave" | "orange-money" | "free-money";
 export type PaymentStatus = "pending" | "completed" | "failed" | "cancelled";
@@ -16,6 +17,8 @@ export interface Streamer {
   createdAt: number;
   /** Read-only key embedded in the OBS / TikTok LIVE Studio Browser Source URL. */
   overlayKey: string;
+  /** Write key for third-party tools (Streamer.bot, TikFinity…) pushing follows/gifts/raids. Never donations. */
+  hookKey: string;
   theme: string;
   communityName: string;
   page: { title: string; message: string; suggestedAmounts: number[] };
@@ -23,6 +26,9 @@ export interface Streamer {
   /** Fan messages are shown on stream only when enabled, after moderation. */
   showMessages: boolean;
   blockedWords: string[];
+  /** Overlay settings saved from the streamer's /control panel (widgets, game,
+   *  webcam, performance…), replayed to every overlay on (re)connection. */
+  overlayConfig?: Record<string, unknown>;
   /** "Connexion à un compte Wave" = the Wave number payouts are sent to. */
   payout: { method: "wave"; phone: string | null };
 }
@@ -78,16 +84,23 @@ export interface Fan {
   createdAt: number;
 }
 
+export interface PasswordReset {
+  tokenHash: string;
+  streamerId: string;
+  expiresAt: number;
+}
+
 export interface Snapshot {
   version: 1;
   streamers: Streamer[];
   sessions: Session[];
+  resets: PasswordReset[];
   payments: Payment[];
   withdrawals: Withdrawal[];
   fans: Fan[];
 }
 
-const EMPTY: Snapshot = { version: 1, streamers: [], sessions: [], payments: [], withdrawals: [], fans: [] };
+const EMPTY: Snapshot = { version: 1, streamers: [], sessions: [], resets: [], payments: [], withdrawals: [], fans: [] };
 
 /**
  * Minimal persistent store: the whole dataset lives in memory and is written
@@ -107,6 +120,14 @@ export class Store {
     if (this.file && existsSync(this.file)) {
       const parsed = JSON.parse(readFileSync(this.file, "utf8")) as Partial<Snapshot>;
       Object.assign(this.data, EMPTY, parsed);
+      this.migrate();
+    }
+  }
+
+  /** Brings records written by older versions up to the current shape. */
+  private migrate() {
+    for (const s of this.data.streamers) {
+      if (!s.hookKey) s.hookKey = randomId("hk", 18);
     }
   }
 
@@ -125,6 +146,24 @@ export class Store {
     renameSync(tmp, this.file);
   }
 
+  /**
+   * Point-in-time copy to data/backups/ (the server takes one at start-up and
+   * every 24 h). Keeps the `keep` most recent files. Returns the new file path.
+   */
+  backup(keep = 14): string | null {
+    if (!this.file) return null;
+    this.flush();
+    if (!existsSync(this.file)) return null;
+    const dir = join(dirname(this.file), "backups");
+    mkdirSync(dir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const target = join(dir, `jokko-${stamp}.json`);
+    copyFileSync(this.file, target);
+    const files = readdirSync(dir).filter((f) => /^jokko-.*\.json$/.test(f)).sort();
+    for (const old of files.slice(0, Math.max(0, files.length - keep))) unlinkSync(join(dir, old));
+    return target;
+  }
+
   streamerById(id: string) {
     return this.data.streamers.find((s) => s.id === id);
   }
@@ -136,6 +175,9 @@ export class Store {
   }
   streamerByOverlayKey(key: string) {
     return this.data.streamers.find((s) => s.overlayKey === key);
+  }
+  streamerByHookKey(key: string) {
+    return this.data.streamers.find((s) => s.hookKey === key);
   }
   paymentByRef(ref: string) {
     return this.data.payments.find((p) => p.ref === ref);

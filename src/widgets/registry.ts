@@ -15,6 +15,7 @@ import { createTimerWidget } from "./Timer";
 import { createTerangaRadarWidget } from "./TerangaRadar";
 import { createEnergyTerangaWidget } from "./EnergyTeranga";
 import { createBossFightWidget } from "./BossFight";
+import { createSupportQrWidget } from "./SupportQr";
 
 /** Widget ids here must match the keys used in config/streamer.json's
  *  `widgets` map and in each scene definition's `widgets` list. */
@@ -38,6 +39,7 @@ export const WIDGET_REGISTRY: Record<string, WidgetFactory> = {
   terangaRadar: createTerangaRadarWidget,
   energyTeranga: createEnergyTerangaWidget,
   bossFight: createBossFightWidget,
+  supportQr: createSupportQrWidget,
 };
 
 export const WIDGET_IDS = Object.keys(WIDGET_REGISTRY);
@@ -64,4 +66,5 @@ export const WIDGET_LABELS: Record<string, string> = {
   terangaRadar: "Radar (mini dashboard)",
   energyTeranga: "Jauge d'énergie",
   bossFight: "Boss Fight",
+  supportQr: "QR code de soutien (Jokko)",
 };

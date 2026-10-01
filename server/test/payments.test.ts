@@ -236,3 +236,44 @@ describe("PayDunya", () => {
     expect(new SimulatedProvider("s").livemode).toBe(false);
   });
 });
+
+describe("CinetPay (agrégateur de secours)", () => {
+  const keys = { apiKey: "ck", siteId: "123456", mode: "test" as const };
+  function fakeFetch(status = "ACCEPTED", amount = 1000) {
+    const calls: { url: string; body: any }[] = [];
+    const impl = (async (url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      calls.push({ url, body });
+      if (url.endsWith("/v2/payment")) return new Response(JSON.stringify({ code: "201", data: { payment_url: "https://checkout.cinetpay.com/payment/abc" } }));
+      return new Response(JSON.stringify({ code: "00", data: { status, amount: String(amount) } }));
+    }) as typeof fetch;
+    return { impl, calls };
+  }
+
+  it("initialise le paiement avec la référence Jokko comme transaction_id", async () => {
+    const { impl, calls } = fakeFetch();
+    const { CinetPayProvider } = await import("../payments/cinetpay");
+    const p = new CinetPayProvider(keys, impl);
+    const r = await p.createCheckout({ ref: "jk_x", amount: 1000, method: "wave", description: "Soutien à Awa via Jokko", returnUrl: "r", cancelUrl: "c", callbackUrl: "cb" });
+    expect(r).toEqual({ redirectUrl: "https://checkout.cinetpay.com/payment/abc", providerToken: "jk_x" });
+    expect(calls[0].body).toMatchObject({ apikey: "ck", site_id: "123456", transaction_id: "jk_x", currency: "XOF", notify_url: "cb" });
+    await expect(p.createCheckout({ ref: "jk_y", amount: 1001, method: "wave", description: "d", returnUrl: "r", cancelUrl: "c", callbackUrl: "cb" })).rejects.toThrow(/multiple de 5/);
+  });
+
+  it("de bout en bout : notification → vérification → alerte", async () => {
+    const { impl, calls } = fakeFetch("ACCEPTED", 1000);
+    const { CinetPayProvider } = await import("../payments/cinetpay");
+    ctx = await startServer({ provider: new CinetPayProvider(keys, impl) });
+    await signup(ctx);
+    const r = await pay(ctx, "awa-gaming", { amount: 1000 });
+    expect(r.json.redirectUrl).toContain("cinetpay.com");
+    // Wrong site id: ignored as not authentic.
+    const bad = new URLSearchParams({ cpm_trans_id: r.json.ref, cpm_site_id: "999" }).toString();
+    expect((await ctx.api("POST", "/api/webhooks/cinetpay", bad, { "Content-Type": "application/x-www-form-urlencoded" })).status).toBe(401);
+    expect((await ctx.api("GET", "/api/webhooks/cinetpay")).status).toBe(200);
+    const form = new URLSearchParams({ cpm_trans_id: r.json.ref, cpm_site_id: "123456" }).toString();
+    expect((await ctx.api("POST", "/api/webhooks/cinetpay", form, { "Content-Type": "application/x-www-form-urlencoded" })).status).toBe(200);
+    expect(calls[calls.length - 1].url).toContain("/v2/payment/check");
+    expect((await ctx.api("GET", `/api/public/payments/${r.json.ref}`)).json.status).toBe("completed");
+  });
+});

@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { join, resolve } from "node:path";
 
-export type ProviderName = "simulated" | "paydunya";
+export type ProviderName = "simulated" | "paydunya" | "cinetpay";
 export type Plan = "free" | "pro";
 
 export interface PayDunyaKeys {
@@ -22,6 +22,7 @@ export interface JokkoConfig {
   publicUrl: string | null;
   provider: ProviderName;
   paydunya: PayDunyaKeys | null;
+  cinetpay: { apiKey: string; siteId: string; mode: "test" | "live" } | null;
   /** True only when real money moves (PayDunya live mode). Balances and fan
    *  ranks are always computed per mode so test money can never be withdrawn as real money. */
   livemode: boolean;
@@ -37,6 +38,8 @@ export interface JokkoConfig {
   /** Behind a reverse proxy (nginx, Render, Railway…): take the client IP from
    *  X-Forwarded-For, otherwise every fan shares one rate-limit bucket. */
   trustProxy: boolean;
+  /** Resend API key + sender; without them e-mails are printed in the terminal. */
+  mail: { resendApiKey: string; from: string } | null;
 }
 
 function num(value: string | undefined, fallback: number): number {
@@ -68,7 +71,8 @@ export function readConfig(root: string, env: NodeJS.ProcessEnv = process.env, m
   const dataDir = resolve(root, env.JOKKO_DATA_DIR || "data");
   mkdirSync(dataDir, { recursive: true });
 
-  const provider: ProviderName = env.JOKKO_PAYMENT_PROVIDER === "paydunya" ? "paydunya" : "simulated";
+  const requested = env.JOKKO_PAYMENT_PROVIDER;
+  const provider: ProviderName = requested === "paydunya" || requested === "cinetpay" ? requested : "simulated";
   let paydunya: PayDunyaKeys | null = null;
   if (provider === "paydunya") {
     const { PAYDUNYA_MASTER_KEY, PAYDUNYA_PRIVATE_KEY, PAYDUNYA_TOKEN } = env;
@@ -85,12 +89,21 @@ export function readConfig(root: string, env: NodeJS.ProcessEnv = process.env, m
     };
   }
 
+  let cinetpay: JokkoConfig["cinetpay"] = null;
+  if (provider === "cinetpay") {
+    if (!env.CINETPAY_API_KEY || !env.CINETPAY_SITE_ID) {
+      throw new Error("JOKKO_PAYMENT_PROVIDER=cinetpay mais CINETPAY_API_KEY / CINETPAY_SITE_ID sont manquants (voir .env.example).");
+    }
+    cinetpay = { apiKey: env.CINETPAY_API_KEY, siteId: env.CINETPAY_SITE_ID, mode: env.CINETPAY_MODE === "live" ? "live" : "test" };
+  }
+
   return {
     dataDir,
     publicUrl: env.JOKKO_PUBLIC_URL ? env.JOKKO_PUBLIC_URL.replace(/\/+$/, "") : null,
     provider,
     paydunya,
-    livemode: paydunya?.mode === "live",
+    cinetpay,
+    livemode: paydunya?.mode === "live" || cinetpay?.mode === "live",
     secret: resolveSecret(dataDir, env),
     adminToken: env.JOKKO_ADMIN_TOKEN && env.JOKKO_ADMIN_TOKEN.length >= 16 ? env.JOKKO_ADMIN_TOKEN : null,
     commission: {
@@ -102,5 +115,6 @@ export function readConfig(root: string, env: NodeJS.ProcessEnv = process.env, m
     minWithdrawal: num(env.JOKKO_MIN_WITHDRAWAL, 1_000),
     allowLocalBridge: env.JOKKO_LOCAL_BRIDGE ? env.JOKKO_LOCAL_BRIDGE === "1" : mode === "development",
     trustProxy: env.JOKKO_TRUST_PROXY === "1",
+    mail: env.RESEND_API_KEY ? { resendApiKey: env.RESEND_API_KEY, from: env.JOKKO_MAIL_FROM || "Jokko <noreply@example.com>" } : null,
   };
 }

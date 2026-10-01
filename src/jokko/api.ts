@@ -9,13 +9,13 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+export async function api<T = any>(method: string, path: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<T> {
   let res: Response;
   try {
     res = await fetch(path, {
       method,
       credentials: "same-origin",
-      headers: body !== undefined || method !== "GET" ? { "Content-Type": "application/json" } : undefined,
+      headers: { ...(body !== undefined || method !== "GET" ? { "Content-Type": "application/json" } : {}), ...extraHeaders },
       body: body !== undefined ? JSON.stringify(body) : method !== "GET" ? "{}" : undefined,
     });
   } catch {

@@ -31,7 +31,7 @@ const port = Number(process.env.PORT) || 8080;
 server.listen(port, () => {
   console.log(`\n  Jokko prêt sur http://localhost:${port}`);
   console.log(`  Paiements : ${app.provider.name}${app.provider.livemode ? " (RÉEL)" : " (mode test, aucun argent réel)"}`);
-  if (cfg.provider === "paydunya" && !cfg.publicUrl) console.warn("  ⚠ JOKKO_PUBLIC_URL non défini : PayDunya ne pourra pas joindre le webhook.");
+  if (cfg.provider !== "simulated" && !cfg.publicUrl) console.warn(`  ⚠ JOKKO_PUBLIC_URL non défini : ${cfg.provider} ne pourra pas joindre le webhook.`);
   if (!cfg.adminToken) console.log("  (JOKKO_ADMIN_TOKEN non défini : API d'administration des retraits désactivée)");
 });
 

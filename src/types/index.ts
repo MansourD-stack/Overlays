@@ -39,6 +39,8 @@ export interface StreamerConfig {
   score: { team: number; opponent: number; roundsWon: number; roundsTotal: number };
   ranking: { position: number; of: number };
   lastSupporter: { name: string; type: string };
+  /** Jokko support page. Filled automatically in hosted mode; feeds the supportQr widget. */
+  support: { url: string };
   easterEggs: { enabled: boolean; dakarMode: boolean; chatCommand: string; keyCombo: string };
   widgets: Record<string, { enabled: boolean; scenes: string[] }>;
   /** Per-widget placement/appearance — this is what makes widgets "déplaçable,

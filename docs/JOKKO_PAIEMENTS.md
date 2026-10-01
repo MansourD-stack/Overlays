@@ -56,7 +56,9 @@ curl -X POST "$JOKKO_PUBLIC_URL/api/admin/streamers/<slug>/plan" \
 
 ## 4. Retraits
 
-Le streamer enregistre son **numéro Wave** puis demande un retrait depuis le tableau de bord. Le montant est immédiatement réservé sur son solde. Le traitement est manuel dans le MVP :
+Le streamer enregistre son **numéro Wave** puis demande un retrait depuis le tableau de bord. Le montant est immédiatement réservé sur son solde. Le traitement est manuel dans le MVP, depuis la **console `/admin`** (jeton `JOKKO_ADMIN_TOKEN`) : fais le virement Wave, puis clique **Versé** avec la référence, ou **Refuser** avec un motif (le montant redevient disponible et le streamer voit le motif).
+
+La même chose en ligne de commande :
 
 ```bash
 # Lister les demandes en attente
@@ -91,6 +93,25 @@ Liste de contrôle :
 
 > **Point non négociable du cahier des charges** : le statut juridique de l'entreprise et les obligations fiscales doivent être confirmés avec l'agrégateur choisi et, idéalement, un conseil local **avant** que le premier vrai paiement circule. Cette documentation n'est pas un conseil juridique ou comptable.
 
-## 6. Ajouter un autre agrégateur (CinetPay, Hub2…)
+## 6. CinetPay, l'agrégateur de secours
 
-Implémente l'interface `PaymentProvider` (`server/payments/provider.ts`) : `createCheckout`, `parseWebhook` (retourne `null` si la notification n'est pas authentique), `checkStatus`. Puis sélectionne-la dans `createProvider` (`server/app.ts`). Le service de paiement, les alertes, les rangs et le tableau de bord n'ont pas à changer. Ajoute les tests correspondants dans `server/test/`.
+Le cahier des charges demande un second agrégateur avant l'ouverture publique. CinetPay est intégré et se sélectionne sans toucher au code :
+
+```ini
+JOKKO_PAYMENT_PROVIDER=cinetpay
+CINETPAY_MODE=test
+CINETPAY_API_KEY=...
+CINETPAY_SITE_ID=...
+JOKKO_PUBLIC_URL=https://...
+```
+
+- Initialisation : `POST https://api-checkout.cinetpay.com/v2/payment` (la référence Jokko sert de `transaction_id`).
+- Notification : CinetPay appelle `JOKKO_PUBLIC_URL/api/webhooks/cinetpay` ; le `site_id` doit correspondre, puis le statut **et** le montant sont relus via `POST /v2/payment/check` avant tout crédit.
+- CinetPay exige des montants multiples de 5 F : le fan reçoit un message clair sinon.
+- La page CinetPay propose tous ses moyens (`channels: "ALL"`) : à affiner en sandbox pour ne montrer que Wave / Orange Money / Free Money.
+
+Un seul agrégateur est actif à la fois : en cas de panne de PayDunya, change `JOKKO_PAYMENT_PROVIDER` et redémarre. Les paiements déjà créés chez l'autre agrégateur restent dans l'historique.
+
+## 7. Ajouter un autre agrégateur (Hub2…)
+
+Implémente l'interface `PaymentProvider` (`server/payments/provider.ts`) : `createCheckout`, `parseWebhook` (retourne `null` si la notification n'est pas authentique), `checkStatus`. Puis sélectionne-la dans `createProvider` (`server/app.ts`) et ajoute ses variables dans `server/config.ts`. Le service de paiement, les alertes, les rangs et le tableau de bord n'ont pas à changer. Ajoute les tests correspondants dans `server/test/`.

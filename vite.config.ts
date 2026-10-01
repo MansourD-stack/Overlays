@@ -60,6 +60,7 @@ export default defineConfig({
         dashboard: resolve(root, "dashboard.html"),
         support: resolve(root, "support.html"),
         paySim: resolve(root, "pay-sim.html"),
+        admin: resolve(root, "admin.html"),
       },
     },
   },

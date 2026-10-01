@@ -3,6 +3,7 @@ import "./dashboard.css";
 import { api, ApiError } from "../api";
 import { STATUS_LABELS, copyText, dateTime, fcfa } from "../format";
 import { banner, button, el, field, input, progress, toast } from "../ui";
+import { qrElement, qrSvgMarkup } from "@/components/QrCode";
 
 /* Streamer dashboard: sign-up/login, onboarding in 3 steps (overlay → test
  * alert → share link), payment history, balance, Wave payout number,
@@ -89,13 +90,21 @@ function renderAuth(mode: "signup" | "login" = "signup") {
     }
   });
 
-  const switcher = el("p", { class: "jk-muted jk-small", attrs: { style: "text-align:center" } });
+  const switcher = el("p", { class: "jk-muted jk-small jk-auth__links" });
   const link = el("a", { text: mode === "signup" ? "J'ai déjà un compte" : "Créer un compte", attrs: { href: "#" } });
   link.addEventListener("click", (e) => {
     e.preventDefault();
     renderAuth(mode === "signup" ? "login" : "signup");
   });
   switcher.append(link);
+  if (mode === "login") {
+    const forgot = el("a", { text: "Mot de passe oublié ?", attrs: { href: "#" } });
+    forgot.addEventListener("click", (e) => {
+      e.preventDefault();
+      renderForgot(email.value);
+    });
+    switcher.append(forgot);
+  }
 
   root.replaceChildren(
     header(),
@@ -120,6 +129,58 @@ function renderAuth(mode: "signup" | "login" = "signup") {
   (mode === "signup" ? name : email).focus();
 }
 
+function authShell(title: string, body: Node[]) {
+  window.clearInterval(refreshTimer);
+  root.replaceChildren(header(), el("main", { class: "jk-auth jk-auth--single", children: [el("section", { class: "jk-card jk-auth__card jk-stack", children: [el("h2", { class: "jk-card__title", text: title }), ...body] })] }));
+}
+
+function renderForgot(prefill = "") {
+  const errors = el("div");
+  const email = input({ type: "email", autocomplete: "email", required: "" }, prefill);
+  const submit = el("button", { class: "jk-btn jk-btn--primary jk-btn--block", text: "Recevoir un lien", attrs: { type: "submit" } });
+  const form = el("form", { class: "jk-stack", children: [el("p", { class: "jk-muted", text: "Indique l'e-mail de ton compte : tu recevras un lien valable 30 minutes pour choisir un nouveau mot de passe." }), field("E-mail", email), errors, submit] });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submit.disabled = true;
+    try {
+      await api("POST", "/api/auth/forgot", { email: email.value });
+      form.replaceChildren(banner("ok", "Si un compte existe avec cet e-mail, le lien vient de partir. Pense à regarder dans les spams."));
+    } catch (err) {
+      showError(errors, err);
+      submit.disabled = false;
+    }
+  });
+  const back = el("a", { text: "← Retour à la connexion", attrs: { href: "#" } });
+  back.addEventListener("click", (e) => {
+    e.preventDefault();
+    renderAuth("login");
+  });
+  authShell("Mot de passe oublié", [form, el("p", { class: "jk-small", children: [back] })]);
+  email.focus();
+}
+
+function renderReset(token: string) {
+  const errors = el("div");
+  const password = input({ type: "password", autocomplete: "new-password", minlength: "8", required: "" });
+  const submit = el("button", { class: "jk-btn jk-btn--primary jk-btn--block", text: "Enregistrer et me connecter", attrs: { type: "submit" } });
+  const form = el("form", { class: "jk-stack", children: [field("Nouveau mot de passe", password, "8 caractères minimum. Tes autres appareils seront déconnectés."), errors, submit] });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    submit.disabled = true;
+    try {
+      await api("POST", "/api/auth/reset", { token, password: password.value });
+      history.replaceState(null, "", "/dashboard");
+      toast("Mot de passe modifié");
+      await loadDashboard();
+    } catch (err) {
+      showError(errors, err);
+      submit.disabled = false;
+    }
+  });
+  authShell("Choisis un nouveau mot de passe", [form]);
+  password.focus();
+}
+
 // ───────────────────────── Dashboard ─────────────────────────
 
 interface Dashboard {
@@ -129,6 +190,7 @@ interface Dashboard {
   payments: any[];
   withdrawals: any[];
   overlay: { key: string; urls: Record<string, string> };
+  hooks: { url: string; types: string[] };
   supportUrl: string;
   themes: { id: string; available: boolean }[];
   commissionRate: number;
@@ -271,7 +333,12 @@ function payoutCard(d: Dashboard, reload: () => void) {
     ? el("ul", {
         class: "jk-list",
         children: d.withdrawals.slice(0, 5).map((w) =>
-          el("li", { children: [el("span", { text: `${fcfa(w.amount)} → ${w.phone}` }), el("span", { class: `jk-status jk-status--${w.status}`, text: STATUS_LABELS[w.status] ?? w.status })] })
+          el("li", {
+            children: [
+              el("div", { children: [el("span", { text: `${fcfa(w.amount)} → ${w.phone}` }), w.note ? el("div", { class: "jk-muted jk-small", text: w.note }) : null] }),
+              el("span", { class: `jk-status jk-status--${w.status}`, text: STATUS_LABELS[w.status] ?? w.status }),
+            ],
+          })
         ),
       })
     : null;
@@ -403,6 +470,66 @@ function settingsCard(d: Dashboard, reload: () => void) {
   });
 }
 
+function download(filename: string, content: string, type: string) {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const a = el("a", { attrs: { href: url, download: filename } });
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function supportCard(d: Dashboard) {
+  return el("section", {
+    class: "jk-card jk-stack",
+    children: [
+      el("h2", { class: "jk-card__title", text: "Lien de soutien" }),
+      el("div", {
+        class: "jk-qr",
+        children: [
+          qrElement(d.supportUrl, "jk-qr__code", { label: "QR code de ta page de soutien" }),
+          el("div", {
+            class: "jk-stack jk-small",
+            children: [
+              el("p", { class: "jk-muted", text: "Tes viewers le scannent avec leur téléphone. Il s'affiche aussi sur l'overlay (widget « QR code de soutien ») dans les scènes Starting Soon, Just Chatting, BRB et Fin de live." }),
+              button("Télécharger le QR (SVG)", "jk-btn--sm", () => download(`jokko-${d.streamer.slug}-qr.svg`, qrSvgMarkup(d.supportUrl, { margin: 4 }), "image/svg+xml")),
+            ],
+          }),
+        ],
+      }),
+      copyRow("À mettre en bio", d.supportUrl),
+    ],
+  });
+}
+
+function integrationsCard(d: Dashboard, reload: () => void) {
+  return el("section", {
+    class: "jk-card jk-stack",
+    children: [
+      el("h2", { class: "jk-card__title", text: "Intégrations Twitch / TikTok" }),
+      el("p", {
+        class: "jk-muted jk-small",
+        text: "Branche Streamer.bot, TikFinity ou tout outil capable d'appeler une URL : tes follows, abonnements, cadeaux TikTok et raids déclenchent alors les alertes de l'overlay. Les dons, eux, ne passent que par Jokko.",
+      }),
+      copyRow("URL du webhook (secrète)", d.hooks.url, "Ne la montre jamais en stream."),
+      el("details", {
+        class: "jk-small",
+        children: [
+          el("summary", { text: "Exemples" }),
+          el("pre", { class: "jk-code", text: `POST ${d.hooks.url}\n{"type":"follow","username":"Awa"}\n{"type":"gift","username":"Modou","giftName":"Lion","coins":500}\n{"type":"likes","total":4200}\n\nOu en GET (TikFinity) :\n${d.hooks.url}?type=follow&username={username}` }),
+          el("p", { class: "jk-muted", text: `Types acceptés : ${d.hooks.types.join(", ")}. Détails dans docs/JOKKO_INTEGRATIONS.md.` }),
+        ],
+      }),
+      button("Régénérer l'URL", "jk-btn--sm jk-btn--danger", async () => {
+        if (!confirm("L'ancienne URL cessera de fonctionner dans tes outils. Continuer ?")) return;
+        await api("POST", "/api/hooks/rotate", {});
+        toast("Nouvelle URL générée");
+        reload();
+      }),
+    ],
+  });
+}
+
 function renderDashboard(d: Dashboard) {
   const s = d.streamer;
   const reload = () => void loadDashboard();
@@ -448,11 +575,11 @@ function renderDashboard(d: Dashboard) {
             el("div", {
               class: "jk-stack",
               children: [
-                el("section", { class: "jk-card", children: [el("h2", { class: "jk-card__title", children: [el("span", { text: "Historique des paiements" }), el("span", { class: "jk-muted jk-small", text: "actualisé toutes les 10 s" })] }), paymentsTable(d)] }),
+                el("section", { class: "jk-card", children: [el("h2", { class: "jk-card__title", children: [el("span", { text: "Historique des paiements" }), el("a", { class: "jk-btn jk-btn--sm", text: "Exporter (CSV)", attrs: { href: "/api/payments.csv", download: "" } })] }), paymentsTable(d)] }),
                 settingsCard(d, reload),
               ],
             }),
-            el("div", { class: "jk-stack", children: [payoutCard(d, reload), overlayCard(d, reload), el("section", { class: "jk-card jk-stack", children: [el("h2", { class: "jk-card__title", text: "Lien de soutien" }), copyRow("À mettre en bio", d.supportUrl)] })] }),
+            el("div", { class: "jk-stack", children: [supportCard(d), payoutCard(d, reload), overlayCard(d, reload), integrationsCard(d, reload)] }),
           ],
         }),
       ],
@@ -473,4 +600,6 @@ function renderDashboard(d: Dashboard) {
   }, 10_000);
 }
 
-void loadDashboard();
+const resetToken = new URLSearchParams(location.search).get("reset");
+if (resetToken) renderReset(resetToken);
+else void loadDashboard();

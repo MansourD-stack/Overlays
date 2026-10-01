@@ -19,7 +19,7 @@ C'est le fichier à éditer en premier, sans toucher au code :
 
 `communityName` est repris dans les alertes (« Bienvenue dans la … »), le score et l'écran de fin (`{community}` dans les titres de scène). `goals.donations` alimente le widget **Objectif dons**.
 
-> **Avec un compte Jokko** (overlay ouvert avec `&key=…`), le nom, la communauté, le thème et l'objectif de dons viennent des **réglages du tableau de bord** et priment sur ce fichier. Le reste (widgets, webcam, performance…) continue de se régler ici et dans `/control`.
+> **Avec un compte Jokko** (overlay ouvert avec `&key=…`), le nom, la communauté, le thème et l'objectif de dons viennent des **réglages du tableau de bord** et priment sur ce fichier. Le reste (jeu, widgets, webcam, performance…) se règle dans `/control` ouvert **dans le navigateur où tu es connecté au tableau de bord** : ces réglages sont alors enregistrés sur le serveur Jokko et retrouvés par l'overlay même après un redémarrage d'OBS ou de TikTok LIVE Studio.
 
 Après modification, relancez `npm run dev` (ou rechargez la page) — c'est la source des valeurs par défaut. Toute modification faite en direct depuis `/control` est ensuite stockée dans le `localStorage` du navigateur (donc persistante entre deux sessions sur la même machine) et n'écrase jamais ce fichier.
 
